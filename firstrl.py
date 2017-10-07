@@ -1162,7 +1162,7 @@ def load_game():
 	global map, objects, inventory, player, game_msgs, game_state
 	global stairs, dungeon_level
 	
-	file = shelve.open('savegame', 'r')
+	file = shelve.open('savegame.sav', 'r')
 	map = file['map']
 	objects = file['objects']
 	inventory = file['inventory']
@@ -1180,7 +1180,7 @@ def save_game():
 	# shelves make use of Python's dictionary. 
 	# Basically a key valeu pair from PHP
 	# open an empty shelf (possible overwriting an old one) to write game data
-	file = shelve.open('savegame', 'n')
+	file = shelve.open('savegame.sav', 'n')
 	file['map'] = map
 	file['objects'] = objects
 	file['player_index'] = objects.index(player)
