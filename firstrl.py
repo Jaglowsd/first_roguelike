@@ -892,7 +892,7 @@ def get_all_equiped(obj):
 		equiped_list = []
 		for item in inventory:
 			if item.equipment and item.equipment.is_equiped:
-				equiped_list.append(item)
+				equiped_list.append(item.equipment)
 		return equiped_list
 	else:
 		return [] # other objects by default do not have equipment
@@ -1139,7 +1139,7 @@ def new_game():
 	# keep track of player state
 	game_state = 'playing'
 	
-	# player inventory
+	# player inventory, list of objects
 	inventory = []
 	
 	# Message log - composed of message and message color
