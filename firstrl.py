@@ -185,7 +185,7 @@ class Item:
 		else:
 			inventory.append(cls.owner)
 			objects.remove(cls.owner)
-			message('You picked up a ' + cls.owner.name + '!', libtcod.green)
+			message('Picked up ' + cls.owner.name + '!', libtcod.green)
 			
 			# special case where the item is a piece of equipment,
 			# the 'use' function toggles equip/dequip
@@ -201,7 +201,7 @@ class Item:
 		cls.owner.y = player.y
 		objects.append(cls.owner)
 		cls.owner.send_to_front()
-		message('You dropped a' + cls.owner.name, libtcod.yellow)
+		message('Dropped ' + cls.owner.name, libtcod.yellow)
 		
 		# when dropping equipment we need to dequip it
 		equipment = cls.owner.equipment
@@ -253,13 +253,14 @@ class Equipment:
 	
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense, power, exp, death_function=None):
+	def __init__(self, hp, defense, power, exp, death_function=None, type=None):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_defense = defense
 		self.base_power = power
 		self.exp = exp # amount of experience given to player
-		self.death_function = death_function
+		self.death_function = death_function		
+		self.type = type # What kind of enemy this object is
 		
 	@property
 	def power(self): 
@@ -505,12 +506,18 @@ def next_level():
 
 def place_objects(room):
 	# place objects on map
+	global monster_dictionary
 	
 	# maximum number of monsters per room, floor dependent
 	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
 	# choose random number of monsters.
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
+	monster_dictionary = {'orc': 
+							{'Orc\'s Right Arm': 5, 'Orc Rations': 15, 'gold': 80},
+						  'troll':
+							{'Club': 5, 'gold': 80}
+						 }
 	monster_chances = {}
 	monster_chances['orc'] = 80 # orc spawn is floor independent (80%)
 	monster_chances['troll'] = from_dungeon_level([[15, 3], [30, 5], [60, 7]])
@@ -522,9 +529,10 @@ def place_objects(room):
 		if not is_blocked(x, y):
 			choice = random_choice(monster_chances)
 			if choice == 'orc': # 80% of gettin an orc.
-				# create orc
+				# create orc				
 				fighter_component = Fighter(hp=20, defense=0, power=4, exp=35,
-											death_function=monster_death)
+											death_function=monster_death,
+											type='orc')
 				ai_component = BasicMonster()
 
 				monster = Object(x, y, 'Travis, the Orc', 'o',
@@ -533,7 +541,8 @@ def place_objects(room):
 			elif choice == 'troll':
 				# create troll
 				fighter_component = Fighter(hp=30, defense=2, power=8, exp=100,
-											death_function=monster_death)
+											death_function=monster_death,
+											type='troll')
 				ai_component = BasicMonster()
 
 				monster = Object(x, y, 'Kanstra, the Troll', 'T',
@@ -548,7 +557,7 @@ def place_objects(room):
 	num_items = libtcod.random_get_int(0, 0, max_items)
 	# dictionary of items and there chances of spawn
 	item_chances = {}
-	item_chances['heal'] = 70 # heal spawn is floor independent
+	item_chances['heal'] = 50 # heal spawn is floor independent
 	item_chances['confuse'] = from_dungeon_level([[10, 2]])
 	item_chances['lighting'] = from_dungeon_level([[25, 4]])
 	item_chances['fire'] = from_dungeon_level([[25, 6]])
@@ -621,7 +630,6 @@ def random_choice_index(chances):
 	choice = 0
 	for w in chances:
 		running_sum += w
-		
 		# see if the dice landed in the part that corresponds to this choice
 		if dice <= running_sum:
 			return choice
@@ -780,11 +788,45 @@ def monster_death(monster):
 			+ str(monster.fighter.exp) + ' experience points.', libtcod.orange)
 	monster.char = '%'
 	monster.color = libtcod.dark_red
-	monster.blocks = False
-	monster.fighter = None
+	monster.blocks = False	
 	monster.ai = None
 	monster.name = 'remains of ' + monster.name
 	monster.send_to_front()
+	# drop monster associated loot, then set fighter to none
+	if monster.fighter and monster.fighter.type:
+		loot_drop(monster)
+	monster.fighter = None
+
+def loot_drop(monster):
+	# drop loot based on a pool of items tied to a monster/NPC
+	global monster_dictionary
+	
+	# List of objects that can be dropped, corresponding to the type argument
+	type = monster.fighter.type
+	loot_chances = monster_dictionary[type]	
+	choice = random_choice(loot_chances)
+	
+	item = None
+	if type == 'orc':	
+		if choice == 'Orc\'s Right Arm':
+			equip_component = Equipment(slot='main hand', power_bonus=3)
+			item = Object(monster.x, monster.y, 'orc\'s right arm', 'R',
+						  libtcod.light_green, equipment=equip_component)		
+		elif choice == 'Orc Rations':
+			item_component = Item(use_function=cast_heal)
+			item = Object(monster.x, monster.y, 'orc rations', 'x', libtcod.white,
+						  item=item_component, always_visible=True)
+		elif choice == 'gold':
+			message('5 gold was dropped by the orc', libtcod.yellow)
+	elif type == 'troll':
+		if choice == 'Club':
+			equip_component = Equipment(slot='main hand', power_bonus=5)
+			item = Object(monster.x, monster.y, 'Orc\'s Right Arm', 'P',
+						  libtcod.brown, equipment=equip_component)
+						  
+	if item:
+		objects.append(item)
+		item.send_to_front() # item appear below other objects.
 			
 def target_tile(max_range=None):
 	# return position of tile that player left clicks within fov 
