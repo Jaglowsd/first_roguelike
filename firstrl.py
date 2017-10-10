@@ -245,7 +245,7 @@ class Equipment:
 				
 	def get_equiped_in_slot(cls, slot):
 		# returns the equipment in a slot, or None of it's empty
-		for obj in objects:
+		for obj in inventory:
 			if (obj.equipment and obj.equipment.slot == slot 
 				and obj.equipment.is_equiped):
 				return obj.equipment
@@ -585,12 +585,12 @@ def place_objects(room):
 							  item=item_component, always_visible=True)
 			elif choice == 'sword':
 				# sword (5% chance from floor 4 onwards)
-				equip_component = Equipment(slot='right hand', power_bonus=3)
+				equip_component = Equipment(slot='main hand', power_bonus=3)
 				item = Object(x, y, 'Beast Slayer', '/', libtcod.sky,
 							  equipment=equip_component)
 			elif choice == 'shield':
 				# shield (15% chance floor 8 onwards)
-				equip_component = Equipment(slot='left hand', defense_bonus=1)
+				equip_component = Equipment(slot='off hand', defense_bonus=1)
 				item = Object(x, y, 'Shield', '[', libtcod.darker_orange,
 							  equipment=equip_component)
 
@@ -1152,7 +1152,7 @@ def new_game():
 			'of the Ancient King.', libtcod.yellow)
 			
 	# starting equipment for player
-	equip_component = Equipment(slot='right hand', power_bonus=2)
+	equip_component = Equipment(slot='main hand', power_bonus=2)
 	dagger = Object(0, 0, 'dagger', '-',
 					libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
