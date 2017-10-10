@@ -286,6 +286,8 @@ class Fighter:
 			# Check if fighter is dead, then call their death function.
 			if cls.hp <= 0:
 				d_function = cls.death_function
+				# set to 0 to prevent a negative hp bar from being drawn
+				cls.hp = 0
 				if d_function is not None:
 					d_function(cls.owner)
 					if cls.owner != player: # yield player exp
