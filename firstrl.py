@@ -52,6 +52,13 @@ FIREBALL_RADIUS = 3
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
 
+# Item class drop chances
+COMMON = 60
+UNCOMMON = 30
+RARE = 15
+LEGENDARY = 5
+GOLD = 80
+
 # Field of View Constants
 FOV_ALGO = 0 # BASIC algorithm
 FOV_LIGHT_WALLS = True # light walls or not
@@ -506,17 +513,18 @@ def next_level():
 
 def place_objects(room):
 	# place objects on map
-	global monster_dictionary
+	global monster_loot_pool
 	
 	# maximum number of monsters per room, floor dependent
 	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
 	# choose random number of monsters.
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
-	monster_dictionary = {'orc': 
-							{'Orc\'s Right Arm': 5, 'Orc Rations': 15, 'gold': 80},
+	monster_loot_pool = {'orc':
+							{'orc\'s right arm': RARE, 'rations': COMMON,
+							 'gold': GOLD},
 						  'troll':
-							{'Club': 5, 'gold': 80}
+							{'club': RARE, 'rations': COMMON, 'gold': GOLD}
 						 }
 	monster_chances = {}
 	monster_chances['orc'] = 80 # orc spawn is floor independent (80%)
@@ -535,7 +543,7 @@ def place_objects(room):
 											type='orc')
 				ai_component = BasicMonster()
 
-				monster = Object(x, y, 'Travis, the Orc', 'o',
+				monster = Object(x, y, 'Orc', 'o',
 								 libtcod.desaturated_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 			elif choice == 'troll':
@@ -545,7 +553,7 @@ def place_objects(room):
 											type='troll')
 				ai_component = BasicMonster()
 
-				monster = Object(x, y, 'Kanstra, the Troll', 'T',
+				monster = Object(x, y, 'Troll', 'T',
 								 libtcod.darker_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 
@@ -799,29 +807,29 @@ def monster_death(monster):
 
 def loot_drop(monster):
 	# drop loot based on a pool of items tied to a monster/NPC
-	global monster_dictionary
+	global monster_loot_pool
 	
 	# List of objects that can be dropped, corresponding to the type argument
 	type = monster.fighter.type
-	loot_chances = monster_dictionary[type]	
+	loot_chances = monster_loot_pool[type]
 	choice = random_choice(loot_chances)
 	
 	item = None
 	if type == 'orc':	
-		if choice == 'Orc\'s Right Arm':
+		if choice == 'orc\'s right arm':
 			equip_component = Equipment(slot='main hand', power_bonus=3)
 			item = Object(monster.x, monster.y, 'orc\'s right arm', 'R',
 						  libtcod.light_green, equipment=equip_component)		
-		elif choice == 'Orc Rations':
+		elif choice == 'rations':
 			item_component = Item(use_function=cast_heal)
-			item = Object(monster.x, monster.y, 'orc rations', 'x', libtcod.white,
+			item = Object(monster.x, monster.y, 'rations', 'x', libtcod.white,
 						  item=item_component, always_visible=True)
 		elif choice == 'gold':
 			message('5 gold was dropped by the orc', libtcod.yellow)
 	elif type == 'troll':
-		if choice == 'Club':
+		if choice == 'club':
 			equip_component = Equipment(slot='main hand', power_bonus=5)
-			item = Object(monster.x, monster.y, 'Orc\'s Right Arm', 'P',
+			item = Object(monster.x, monster.y, 'club', 'P',
 						  libtcod.brown, equipment=equip_component)
 						  
 	if item:
