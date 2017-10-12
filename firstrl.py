@@ -426,7 +426,7 @@ def make_map():
 	num_rooms = 0
 	
 	for r in range(MAX_ROOMS):
-		# random width and height
+		# random width and height for rooms.
 		w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
 		h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
 		# random position without going out of bounds.
@@ -639,78 +639,6 @@ def is_blocked(x, y):
 			return True
 	
 	return False
-			
-	
-def menu(header, options, width):
-	global key, mouse
-	# currently limited to 26 options because we allow at most chars A-Z
-	if len(options) > 26:
-		raise ValueError('Cannot have a menu with more than 26 options.')
-
-	# calculate total height for the header (after auto wrap) and 1 line/option
-	header_height = libtcod.console_get_height_rect(con, 0, 0, width, 
-													SCREEN_HEIGHT, header)
-	if header == '':
-		header_height = 0
-	height = len(options) + header_height
-
-	# create an off-screen console that represents the menu's window
-	window = libtcod.console_new(width, height)
-
-	# print the header, with auto-wrap
-	libtcod.console_set_default_foreground(window, libtcod.white)
-	libtcod.console_print_rect_ex(window, 0, 0, width, height, 
-								  libtcod.BKGND_NONE, libtcod.LEFT, header)
-
-	# print all the options
-	y = header_height
-	letter_index = ord('a')
-	for option_text in options:
-		text = '(' + chr(letter_index) + ')' + option_text
-		libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE, 
-								 libtcod.LEFT, text)
-		y += 1
-		letter_index += 1
-
-	# blit the contents of 'window' to the root console
-	x = SCREEN_WIDTH/2 - width/2
-	y = SCREEN_HEIGHT/2 - height/2
-	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
-
-	# present the root console to the player and wait for a key press
-	libtcod.console_flush()
-	key = libtcod.console_wait_for_keypress(True)
-	
-	if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
-		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-	
-	# convert ASCII code to an index, if it corresponds to an option return it
-	index = key.c - ord('a')
-	if index >= 0 and index < len(options):
-		return index
-	
-	return None
-	
-def inventory_menu(header):
-	# show a menu with each item of the inventory as an option
-	if len(inventory) == 0:
-		options = ['Inventory is empty']
-	else:
-		options = []
-		for item in inventory:
-			text = item.name
-			# show additional info about equipment
-			if item.equipment and item.equipment.is_equiped:
-				text += ' (on ' + item.equipment.slot + ')'
-			options.append(text)
-
-	index = menu(header, options, INVENTORY_WIDTH)
-	
-	# if an item was chosen, return it
-	if index is None or len(inventory) == 0:
-		return None
-		
-	return inventory[index].item
 
 def cast_heal():
 	# heal the player
@@ -848,23 +776,6 @@ def get_names_under_mouse():
 					   and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
 	names = ', '.join(names) # join names separated by commas
 	return names.capitalize()
-	
-def message(new_msg, color=libtcod.white):
-	# Append messages to game feed while removing old ones if buffer is full.
-	
-	# split message among multiple lines if needed.
-	new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
-	
-	for line in new_msg_lines:
-		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == MSG_HEIGHT:
-			del game_msgs[0]
-			
-		# add the new line as a tuple, with text and color.
-		game_msgs.append( (line, color) )
-		
-def msgbox(text, width=50):
-	menu(text, [], width) # yse menu() as a sort of 'message box'
 
 def player_move_or_attack(dx, dy):
 	# compute player's new position after movement or handle player's attack.
@@ -951,7 +862,7 @@ def handle_keys():
 		elif key.vk == libtcod.KEY_RIGHT:
 			player_move_or_attack(1, 0)
 		elif chr(key.c) == 'p':
-			pass # do nothing, wait for monster to pass you
+			pass # do nothing, i.e. waste a turn
 
 		else:
 			# test for other key presses.
@@ -986,6 +897,11 @@ def handle_keys():
 					   + str(player.fighter.max_hp) + '\nAttack: ' 
 					   + str(player.fighter.power) + '\nDefense: ' 
 					   + str(player.fighter.defense), CHARACTER_SCREEN_WIDTH)
+			if key_chr == '/': # player controls
+				text = ('Controls - Any key to cancel\n\nInventory: i'
+						'\nDrop item:d\nPick up/loot: g\nCharacter stats: c\n'
+						'Wait:p\nMovement: arrow keys\n')
+				menu(text, [], CHARACTER_SCREEN_WIDTH)
 
 			return 'didn\'t-take-turn'
 
@@ -1037,7 +953,7 @@ def render_all():
 	player.draw()
 
 	# Blitting to the console we created,
-	# (essentially allowing us to create graphical panels).
+	# draws everything we put onto the destination console.
 	libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 	
 	# prepare to render GUI panel.
@@ -1059,6 +975,12 @@ def render_all():
 	# display current dungeon level to player
 	libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 
 							'Dungeon Level ' + str(dungeon_level))
+
+	# Player controls
+	if dungeon_level == 1:
+		text = 'Press / for controls'
+		libtcod.console_print_ex(panel, 1, 5, libtcod.BKGND_NONE, libtcod.LEFT,
+							text)
 
 	# display names of objects under the mouse.
 	libtcod.console_set_default_foreground(panel, libtcod.light_gray)
@@ -1088,7 +1010,95 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 	libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE,
 							 libtcod.CENTER,
 							 name + ': ' + str(value) + '/' + str(maximum))
-			
+
+def message(new_msg, color=libtcod.white):
+	# Append messages to game feed while removing old ones if buffer is full.
+
+	# split message among multiple lines if needed.
+	new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+
+	for line in new_msg_lines:
+		# if the buffer is full, remove 1st line to make room for new one.
+		if len(game_msgs) == MSG_HEIGHT:
+			del game_msgs[0]
+
+		# add the new line as a tuple, with text and color.
+		game_msgs.append( (line, color) )
+
+def msgbox(text, width=50):
+	menu(text, [], width) # use menu() as a sort of 'message box'
+
+def menu(header, options, width):
+	global key, mouse
+	# currently limited to 26 options because we allow at most chars A-Z
+	if len(options) > 26:
+		raise ValueError('Cannot have a menu with more than 26 options.')
+
+	# calculate total height for the header (after auto wrap) and 1 line/option
+	header_height = libtcod.console_get_height_rect(con, 0, 0, width,
+													SCREEN_HEIGHT, header)
+	if header == '':
+		header_height = 0
+	height = len(options) + header_height
+
+	# create an off-screen console that represents the menu's window
+	window = libtcod.console_new(width, height)
+
+	# print the header, with auto-wrap
+	libtcod.console_set_default_foreground(window, libtcod.white)
+	libtcod.console_print_rect_ex(window, 0, 0, width, height,
+								  libtcod.BKGND_NONE, libtcod.LEFT, header)
+
+	# print all the options
+	y = header_height
+	letter_index = ord('a')
+	for option_text in options:
+		text = '(' + chr(letter_index) + ')' + option_text
+		libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
+								 libtcod.LEFT, text)
+		y += 1
+		letter_index += 1
+
+	# blit the contents of 'window' to the root console
+	x = SCREEN_WIDTH/2 - width/2
+	y = SCREEN_HEIGHT/2 - height/2
+	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+	# present the root console to the player and wait for a key press
+	libtcod.console_flush()
+	key = libtcod.console_wait_for_keypress(True)
+
+	if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
+		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+
+	# convert ASCII code to an index, if it corresponds to an option return it
+	index = key.c - ord('a')
+	if index >= 0 and index < len(options):
+		return index
+
+	return None
+
+def inventory_menu(header):
+	# show a menu with each item of the inventory as an option
+	if len(inventory) == 0:
+		options = ['Inventory is empty']
+	else:
+		options = []
+		for item in inventory:
+			text = item.name
+			# show additional info about equipment
+			if item.equipment and item.equipment.is_equiped:
+				text += ' (on ' + item.equipment.slot + ')'
+			options.append(text)
+
+	index = menu(header, options, INVENTORY_WIDTH)
+
+	# if an item was chosen, return it
+	if index is None or len(inventory) == 0:
+		return None
+
+	return inventory[index].item
+
 def main_menu():
 	# main menu of game
 	img = libtcod.image_load('menu_background.png')
