@@ -678,14 +678,14 @@ def loot_drop(monster):
 			item = Object(monster.x, monster.y, CONSTANTS.RATIONS, 'x', libtcod.white,
 						  item=item_component, always_visible=True)
 		elif choice == CONSTANTS.GOLD:
-			message('5 gold was dropped by the orc', libtcod.yellow)
+			message('5 gold was dropped by the orc', libtcod.gold)
 	elif type == CONSTANTS.TROLL:
 		if choice == CONSTANTS.CLUB:
 			equip_component = Equipment(slot='main hand', power_bonus=5)
 			item = Object(monster.x, monster.y, CONSTANTS.CLUB, 'P',
 						  libtcod.brown, equipment=equip_component)
 		elif choice == CONSTANTS.GOLD:
-			message('8 gold was dropped by the troll', libtcod.yellow)
+			message('8 gold was dropped by the troll', libtcod.gold)
 	if item:
 		objects.append(item)
 		item.send_to_front() # item appear below other objects.
