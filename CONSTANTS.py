@@ -18,6 +18,9 @@ MSG_HEIGHT = PANEL_HEIGHT - 1
 MAP_WIDTH = 80
 MAP_HEIGHT = 43
 
+# When to end the game
+END_LEVEL = 10
+
 # Max and min room size
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
@@ -70,7 +73,15 @@ RARE = 15
 LEGENDARY = 5
 GOLD_DROP = 80
 
-# monsters
+# Affixes modifier for monsters
+MONSTER_PRE_MOD = {'Weak': -.10, 'Greater': .15, 'Lesser': -.05, 'Badass': .20, 
+				   'SuperBadass': .30}
+# MONSTER_TIER_SUFFIX = {'lord', 'minion', 'worker', 'fiend'}
+
+# Affix scaling factor
+MONSTER_TIER_SCALING = {}
+
+# base monster names
 ORC = 'orc'
 TROLL = 'troll'
 

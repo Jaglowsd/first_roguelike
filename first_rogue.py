@@ -191,7 +191,8 @@ class Equipment:
 	
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense, power, exp, death_function=None, type=None):
+	def __init__(self, hp, defense, power, exp, death_function=None, type=None,
+				 modifier=None):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_defense = defense
@@ -199,6 +200,8 @@ class Fighter:
 		self.exp = exp # amount of experience given to player
 		self.death_function = death_function		
 		self.type = type # What kind of enemy this object is
+		if modifier is not None: # Apply any name base stat modifiers
+			self.apply_modifier(modifier)
 		
 	@property
 	def power(self): 
@@ -250,7 +253,15 @@ class Fighter:
 		cls.hp += amount
 		if cls.hp > cls.max_hp:
 			cls.hp = cls.max_hp
-
+			
+	def apply_modifier(cls, modifier_name):
+		# mutate the base stats of monster based on their affix modifier
+		modifier = CONSTANTS.MONSTER_PRE_MOD[modifier_name]
+		cls.base_max_hp = cls.base_max_hp + (cls.base_max_hp * modifier)
+		cls.hp = cls.base_max_hp
+		cls.base_power = cls.base_power + (cls.base_power * modifier)
+		cls.base_defense = cls.base_defense + (cls.base_defense * modifier)
+		cls.exp = cls.exp + (cls.exp * modifier)
 
 class BasicMonster:
 	# AI for basic monsters
@@ -446,15 +457,33 @@ def next_level():
 
 def place_objects(room):
 	# place objects on map
+	global monster_prefix
 	
 	# maximum number of monsters per room, floor dependent
-	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+	max_monsters = from_dungeon_level([[2, 1, CONSTANTS.END_LEVEL],
+									   [3, 4, CONSTANTS.END_LEVEL],
+									   [5, 6, CONSTANTS.END_LEVEL]])
 	# choose random number of monsters.
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
 	monster_chances = {}
 	monster_chances['orc'] = 80 # orc spawn is floor independent
-	monster_chances['troll'] = from_dungeon_level([[15, 3], [30, 5], [60, 7]])
+	monster_chances['troll'] = from_dungeon_level([[15, 3, CONSTANTS.END_LEVEL],
+												   [30, 5, CONSTANTS.END_LEVEL],
+												   [60, 7, CONSTANTS.END_LEVEL]]
+												   )
+	# generate chances for a prefix.
+	monster_prefix = {}
+	monster_prefix['Weak'] = from_dungeon_level([[75, 1, 2], [25, 2, 4]])
+	monster_prefix['Lesser'] = from_dungeon_level([[25, 1, 2], [50, 2, 4],
+												   [25, 4, 6]])
+	monster_prefix['Greater'] = from_dungeon_level([[25, 2, 4], [65, 4, 6],
+													[75, 6, 8],
+													[50, 6, CONSTANTS.END_LEVEL]])
+	monster_prefix['Badass'] = from_dungeon_level([[10, 4, 6], [20, 6, 8],
+												  [35, 8, CONSTANTS.END_LEVEL]])
+	monster_prefix['SuperBadass'] = from_dungeon_level([[5, 6, 8],
+											  [15, 8, CONSTANTS.END_LEVEL]])
 
 	for i in range(num_monsters):
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -462,41 +491,44 @@ def place_objects(room):
 
 		if not is_blocked(x, y):
 			choice = random_choice(monster_chances)
+			(affixed_name, mod) = choose_affix(choice)
 			if choice == 'orc':
 				# create orc				
 				fighter_component = Fighter(hp=20, defense=0, power=4, exp=35,
 											death_function=monster_death,
-											type=CONSTANTS.ORC)
+											type=CONSTANTS.ORC, modifier=mod)
 				ai_component = BasicMonster()
 
-				monster = Object(x, y, CONSTANTS.ORC, 'o',
+				monster = Object(x, y, affixed_name, 'o',
 								 libtcod.desaturated_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 			elif choice == 'troll':
 				# create troll
 				fighter_component = Fighter(hp=30, defense=2, power=8, exp=100,
 											death_function=monster_death,
-											type=CONSTANTS.TROLL)
+											type=CONSTANTS.TROLL, modifier=mod)
 				ai_component = BasicMonster()
 
-				monster = Object(x, y, CONSTANTS.TROLL, 'T',
+				monster = Object(x, y, affixed_name, 'T',
 								 libtcod.darker_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 
 			objects.append(monster)
 		
 	# maximum number of items per room, floor dependent
-	max_items = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+	max_items = from_dungeon_level([[2, 1, CONSTANTS.END_LEVEL],
+									[3, 4, CONSTANTS.END_LEVEL],
+									[5, 6, CONSTANTS.END_LEVEL]])
 	# choose random number of items to spawn
 	num_items = libtcod.random_get_int(0, 0, max_items)
 	# dictionary of items and there chances of spawn
 	item_chances = {}
 	item_chances['heal'] = 50 # heal spawn is floor independent
-	item_chances['confuse'] = from_dungeon_level([[10, 2]])
-	item_chances['lighting'] = from_dungeon_level([[25, 4]])
-	item_chances['fire'] = from_dungeon_level([[25, 6]])
-	item_chances['sword'] = from_dungeon_level([[5, 4]])
-	item_chances['shield'] = from_dungeon_level([[15, 8]])
+	item_chances['confuse'] = from_dungeon_level([[10, 2, CONSTANTS.END_LEVEL]])
+	item_chances['lighting'] = from_dungeon_level([[25, 4, CONSTANTS.END_LEVEL]])
+	item_chances['fire'] = from_dungeon_level([[25, 6, CONSTANTS.END_LEVEL]])
+	item_chances['sword'] = from_dungeon_level([[5, 4, CONSTANTS.END_LEVEL]])
+	item_chances['shield'] = from_dungeon_level([[15, 8, CONSTANTS.END_LEVEL]])
 	
 	for i in range(num_items):
 		# choose random spot for items
@@ -543,8 +575,8 @@ def place_objects(room):
 def from_dungeon_level(table):
 	# returns value depending on dungeon level. The table specifies what
 	# value occurs after each level, default is 0.
-	for (value, level) in reversed(table):
-		if dungeon_level >= level:
+	for (value, min_level, max_level) in reversed(table):
+		if dungeon_level >= min_level and dungeon_level <= max_level:
 			return value
 	return 0
 
@@ -568,6 +600,27 @@ def random_choice_index(chances):
 		if dice <= running_sum:
 			return choice
 		choice += 1
+		
+def choose_affix(base_name):
+	# returns an affixed name and the modifier to apply
+	global monster_prefix
+	
+	prefix = libtcod.random_get_int(0, 0, 1)
+	if prefix:	
+		# chooses which modifier to apply, if any
+		modifier = random_choice(monster_prefix)
+		# attach the affix to the base name
+		affixed_name = attach_affix(base_name, modifier, 'prefix')
+		return (affixed_name, modifier)
+	else:
+		return (base_name, None)
+		
+def attach_affix(base_name, modifier, affix_type):
+	# return base name with affix applied
+	if affix_type == 'prefix':
+		return (modifier + ' ' + base_name)
+	else:
+		return (base_name + ' ' + modifier)
 
 def is_blocked(x, y):
 	# check if a tile is blocked.
@@ -799,11 +852,11 @@ def check_level_up():
 		# increase hp, def, or power
 		choice = None
 		while choice is None:
-			choice = menu('Level up! Choose which stat to raise:\n',
+			choice = menu('Choose which stat to raise:\n',
 						  ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + '->' + str(player.fighter.max_hp + 20) + ')',
 						  'Strength (+1 Attack, from ' + str(player.fighter.power) + '->' + str(player.fighter.power + 1) + ')',
 						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'], 
-						  LEVEL_SCREEN_WIDTH)
+						  CONSTANTS.LEVEL_SCREEN_WIDTH, 'Level up!')
 			if choice == 0:
 				player.fighter.base_max_hp += 20
 				player.fighter.hp = player.fighter.max_hp
