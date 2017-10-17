@@ -257,11 +257,11 @@ class Fighter:
 	def apply_modifier(cls, modifier_name):
 		# mutate the base stats of monster based on their affix modifier
 		modifier = CONSTANTS.MONSTER_PRE_MOD[modifier_name]
-		cls.base_max_hp = cls.base_max_hp + (cls.base_max_hp * modifier)
+		cls.base_max_hp = cls.base_max_hp + int(round(cls.base_max_hp * modifier))
 		cls.hp = cls.base_max_hp
-		cls.base_power = cls.base_power + (cls.base_power * modifier)
-		cls.base_defense = cls.base_defense + (cls.base_defense * modifier)
-		cls.exp = cls.exp + (cls.exp * modifier)
+		cls.base_power = cls.base_power + int(round(cls.base_power * modifier))
+		cls.base_defense = cls.base_defense + int(round(cls.base_defense * modifier))
+		cls.exp = cls.exp + int(round(cls.exp * modifier))
 
 class BasicMonster:
 	# AI for basic monsters
@@ -471,7 +471,7 @@ def place_objects(room):
 	monster_chances['troll'] = from_dungeon_level([[15, 3, CONSTANTS.END_LEVEL],
 												   [30, 5, CONSTANTS.END_LEVEL],
 												   [60, 7, CONSTANTS.END_LEVEL]]
-												   )
+												  )
 	# generate chances for a prefix.
 	monster_prefix = {}
 	monster_prefix['Weak'] = from_dungeon_level([[75, 1, 2], [25, 2, 4]])
@@ -523,7 +523,7 @@ def place_objects(room):
 	num_items = libtcod.random_get_int(0, 0, max_items)
 	# dictionary of items and there chances of spawn
 	item_chances = {}
-	item_chances['heal'] = 50 # heal spawn is floor independent
+	item_chances['heal'] = 25 # heal spawn is floor independent
 	item_chances['confuse'] = from_dungeon_level([[10, 2, CONSTANTS.END_LEVEL]])
 	item_chances['lighting'] = from_dungeon_level([[25, 4, CONSTANTS.END_LEVEL]])
 	item_chances['fire'] = from_dungeon_level([[25, 6, CONSTANTS.END_LEVEL]])
@@ -690,6 +690,7 @@ def player_death(player):
 	# Modify game state in the event the player dies.
 	global game_state
 	message('You died!', libtcod.red)
+	message('Press ESC for main menu', libtcod.red)
 	game_state = 'dead'
 
 	# turn player into a corpse.
