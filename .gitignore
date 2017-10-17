@@ -7,3 +7,5 @@
 
 # ignore any saved game data
 *.sav
+# ignore compiled version of constants
+CONSTANTS.pyc
