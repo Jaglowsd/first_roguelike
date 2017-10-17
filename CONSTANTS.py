@@ -56,8 +56,9 @@ LEVEL_UP_FACTOR = 150
 FOV_ALGO = 0 # BASIC algorithm
 FOV_LIGHT_WALLS = True # light walls or not
 TORCH_RADIUS = 10
+SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 
-# 20 frames per second
+# 30 frames per second
 LIMIT_FPS = 20
 
 # Color definitions
@@ -74,7 +75,7 @@ LEGENDARY = 5
 GOLD_DROP = 80
 
 # Affixes modifier for monsters
-MONSTER_PRE_MOD = {'Weak': -.10, 'Greater': .15, 'Lesser': -.05, 'Badass': .20, 
+MONSTER_PRE_MOD = {'Weak': -.10, 'Lesser': -.05, 'Greater': .15, 'Badass': .20, 
 				   'SuperBadass': .30}
 # MONSTER_TIER_SUFFIX = {'lord', 'minion', 'worker', 'fiend'}
 

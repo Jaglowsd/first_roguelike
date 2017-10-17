@@ -263,6 +263,7 @@ class Fighter:
 		cls.base_defense = cls.base_defense + int(round(cls.base_defense * modifier))
 		cls.exp = cls.exp + int(round(cls.exp * modifier))
 
+
 class BasicMonster:
 	# AI for basic monsters
 	def take_turn(cls):
@@ -498,7 +499,6 @@ def place_objects(room):
 											death_function=monster_death,
 											type=CONSTANTS.ORC, modifier=mod)
 				ai_component = BasicMonster()
-
 				monster = Object(x, y, affixed_name, 'o',
 								 libtcod.desaturated_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
@@ -939,10 +939,16 @@ def handle_keys():
 			return 'didn\'t-take-turn'
 
 def render_all():
-	# renders player's fov, draw objects,...
-	global color_dark_ground, color_dark_wall
-	global color_light_wall, color_light_ground
+	# renders player's fov, draw objects, draw panel...
 	global fov_map, fov_recompute
+	global noise, fov_torchx, fov_noise
+
+	# Change in noise
+	dx = 0.0
+	dy = 0.0
+	di = 0.0
+	fov_px = player.x
+	fov_py = player.y
 
 	if fov_recompute:
 		# recompute fov if needed.
@@ -951,35 +957,56 @@ def render_all():
 								CONSTANTS.TORCH_RADIUS, 
 								CONSTANTS.FOV_LIGHT_WALLS, CONSTANTS.FOV_ALGO)
 
-		# go through all tiles, and set their background color according to FOV.
-		for y in range(CONSTANTS.MAP_HEIGHT):
-			for x in range(CONSTANTS.MAP_WIDTH):
-				visible = libtcod.map_is_in_fov(fov_map, x, y)
-				wall = map[x][y].block_sight
-				if not visible:
-					# player can only see if not explored.
-					if map[x][y].explored:
-					# out of player's fov
-						if wall:
-							libtcod.console_set_char_background(con, x, y, 
-															CONSTANTS.color_dark_wall,
-															libtcod.BKGND_SET)
-						else:
-							libtcod.console_set_char_background(con, x, y,
-															CONSTANTS.color_dark_ground,
-															libtcod.BKGND_SET)
-				else:
-					# in player's FOV
+	# slightly change the perlin noise parameter
+	fov_torchx += 0.2
+	# randomize the light position between -1.5 and 1.5
+	tdx = [fov_torchx + 20.0]
+	dx = libtcod.noise_get(noise, tdx, libtcod.NOISE_SIMPLEX) * 1.5
+	tdx[0] += 30.0
+	dy = libtcod.noise_get(noise, tdx, libtcod.NOISE_SIMPLEX) * 1.5
+	di = 0.2 * libtcod.noise_get(noise, [fov_torchx], libtcod.NOISE_SIMPLEX)
+
+	# go through all tiles, and set their background color according to FOV.
+	# add torch effect in player's fov
+	for y in range(CONSTANTS.MAP_HEIGHT):
+		for x in range(CONSTANTS.MAP_WIDTH):
+			visible = libtcod.map_is_in_fov(fov_map, x, y)
+			wall = map[x][y].block_sight
+			if not visible:
+				# player can only see if not explored.
+				if map[x][y].explored:
+				# out of player's fov
 					if wall:
 						libtcod.console_set_char_background(con, x, y,
-															CONSTANTS.color_dark_wall,
-															libtcod.BKGND_SET)
+								CONSTANTS.color_dark_wall, libtcod.BKGND_SET)
 					else:
 						libtcod.console_set_char_background(con, x, y,
-															CONSTANTS.color_dark_ground,
-															libtcod.BKGND_SET)
-					# since it's visible, set explored to true.
-					map[x][y].explored = True
+								CONSTANTS.color_dark_ground, libtcod.BKGND_SET)
+			else:
+				# in player's FOV
+				if wall:
+					base = CONSTANTS.color_dark_wall
+					light = CONSTANTS.color_light_wall
+				else:
+					base = CONSTANTS.color_dark_ground
+					light = CONSTANTS.color_light_ground
+				r = float(x - fov_px + dx) * (x - fov_px + dx) + \
+					(y - fov_py + dy) * (y - fov_py + dy)
+				if r < CONSTANTS.SQUARED_TORCH_RADIUS:
+					# Calculate coefficient for interpolation
+					l = (CONSTANTS.SQUARED_TORCH_RADIUS - r) / \
+						CONSTANTS.SQUARED_TORCH_RADIUS \
+						+ di
+					if l < 0.0:
+						l = 0.0
+					elif l > 1.0:
+						l = 1.0
+					# Interpolate between a dark and lit (wall or ground) color
+					base = libtcod.color_lerp(base, light, l)
+					libtcod.console_set_char_background(con, x, y, base,
+														libtcod.BKGND_SET)
+				# since it's visible, set explored to true.
+				map[x][y].explored = True
 	# draw player last to ensure corpes are not drawn over player.
 	for object in objects:
 		if object != player:
@@ -1244,7 +1271,7 @@ def save_game():
 			
 def initialize_fov():
 	# create fov map
-	global fov_map, fov_recompute
+	global fov_map, fov_recompute, fov_noise, noise
 	
 	# clear the console to prevent old games from leaving behind the map
 	libtcod.console_clear(con)
@@ -1258,12 +1285,16 @@ def initialize_fov():
 		for x in range(CONSTANTS.MAP_WIDTH):
 			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, 
 									   not map[x][y].blocked)
-									   
+	noise = libtcod.noise_new(2)
+	fov_noise = libtcod.noise_new(1, 1.0, 1.0)
+
 def play_game():
-	global key, mouse
+	global key, mouse, fov_torchx
 	
 	player_action = None
 	
+	fov_torchx = 0.0
+
 	# mouse and keyboard information
 	mouse = libtcod.Mouse()
 	key = libtcod.Key()
