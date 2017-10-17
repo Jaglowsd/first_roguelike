@@ -1331,9 +1331,9 @@ def play_game():
 					object.ai.take_turn()
 
 # set up console
-libtcod.console_set_custom_font('terminal16x16_gs_ro.png', 
+libtcod.console_set_custom_font('fonts/consolas12x12_gs_tc.png',
 								libtcod.FONT_TYPE_GREYSCALE 
-								| libtcod.FONT_LAYOUT_ASCII_INROW, 16, 16)
+								| libtcod.FONT_LAYOUT_TCOD)
 libtcod.console_init_root(CONSTANTS.SCREEN_WIDTH, CONSTANTS.SCREEN_HEIGHT, 
 						  'python/libtcod tutorial', False)
 libtcod.sys_set_fps(CONSTANTS.LIMIT_FPS)
