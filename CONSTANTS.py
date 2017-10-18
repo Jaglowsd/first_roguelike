@@ -59,13 +59,13 @@ TORCH_RADIUS = 10
 SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 
 # 30 frames per second
-LIMIT_FPS = 20
+LIMIT_FPS = 30
 
 # Color definitions
-color_dark_wall = libtcod.Color(0, 0, 100)
-color_light_wall = libtcod.Color(130, 110, 50)
-color_dark_ground = libtcod.Color(50, 50, 150)
-color_light_ground = libtcod.Color(200, 180, 50)
+color_dark_wall = libtcod.darker_sepia
+color_dark_ground = libtcod.darker_grey
+color_light_wall = libtcod.sepia
+color_light_ground = libtcod.grey
 
 # Item class drop chances
 COMMON = 60

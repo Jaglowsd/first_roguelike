@@ -500,7 +500,7 @@ def place_objects(room):
 											type=CONSTANTS.ORC, modifier=mod)
 				ai_component = BasicMonster()
 				monster = Object(x, y, affixed_name, 'o',
-								 libtcod.desaturated_green, blocks=True,
+								 libtcod.darker_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 			elif choice == 'troll':
 				# create troll
@@ -510,7 +510,7 @@ def place_objects(room):
 				ai_component = BasicMonster()
 
 				monster = Object(x, y, affixed_name, 'T',
-								 libtcod.darker_green, blocks=True,
+								 libtcod.dark_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
 
 			objects.append(monster)
@@ -977,19 +977,22 @@ def render_all():
 				if map[x][y].explored:
 				# out of player's fov
 					if wall:
-						libtcod.console_set_char_background(con, x, y,
-								CONSTANTS.color_dark_wall, libtcod.BKGND_SET)
+						libtcod.console_put_char_ex(con, x, y, '#',
+							libtcod.lighter_sepia, CONSTANTS.color_dark_wall)
 					else:
-						libtcod.console_set_char_background(con, x, y,
-								CONSTANTS.color_dark_ground, libtcod.BKGND_SET)
+						libtcod.console_put_char_ex(con, x, y, '-',
+							libtcod.lighter_sepia, CONSTANTS.color_dark_ground)
 			else:
 				# in player's FOV
 				if wall:
 					base = CONSTANTS.color_dark_wall
 					light = CONSTANTS.color_light_wall
+					char = '#'
 				else:
 					base = CONSTANTS.color_dark_ground
 					light = CONSTANTS.color_light_ground
+					char = '-'
+
 				r = float(x - fov_px + dx) * (x - fov_px + dx) + \
 					(y - fov_py + dy) * (y - fov_py + dy)
 				if r < CONSTANTS.SQUARED_TORCH_RADIUS:
@@ -1003,8 +1006,8 @@ def render_all():
 						l = 1.0
 					# Interpolate between a dark and lit (wall or ground) color
 					base = libtcod.color_lerp(base, light, l)
-					libtcod.console_set_char_background(con, x, y, base,
-														libtcod.BKGND_SET)
+					libtcod.console_put_char_ex(con, x, y, char,
+								libtcod.lightest_grey, base)
 				# since it's visible, set explored to true.
 				map[x][y].explored = True
 	# draw player last to ensure corpes are not drawn over player.
