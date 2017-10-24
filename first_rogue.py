@@ -96,8 +96,9 @@ class Object:
 
 class Item:
 	# definition of item: items can be picked up and used.
-	def __init__(self, use_function=None):		
-		self.use_function = use_function		
+	def __init__(self, use_function=None, count=1):
+		self.use_function = use_function
+		self.count = count
 
 	def use(cls):
 		# special case where the item is a piece of equipment,
@@ -111,8 +112,17 @@ class Item:
 			message('The ' + cls.owner.name + ' cannot be used.')
 		else:
 			# call the use function here and see if the return is 'cancelled'
-			if cls.use_function() != 'cancelled':
-				inventory.remove(cls.owner) # use up item if it wasn't cancelled
+
+			# Special case of using estus flask
+			if cls.owner == estus_flask:
+				if estus_flask.item.count == 0:
+					message('Your flask is empty...', libtcod.flame)
+				else:
+					if cls.use_function(cls) != 'cancelled':
+						estus_flask.item.count -= 1
+			else:
+				if cls.use_function(cls) != 'cancelled':
+					inventory.remove(cls.owner) # use item if it wasn't cancelled
 		
 	def pick_up(cls):
 		# add item to player's inventory and remove it from the map.
@@ -134,17 +144,21 @@ class Item:
 
 	def drop(cls):
 		# drop item from inventory and leave it at player's coordinates
-		inventory.remove(cls.owner)
-		cls.owner.x = player.x
-		cls.owner.y = player.y
-		objects.append(cls.owner)
-		cls.owner.send_to_front()
-		message('Dropped ' + cls.owner.name, libtcod.yellow)
-		
-		# when dropping equipment we need to dequip it
-		equipment = cls.owner.equipment
-		if equipment and equipment.is_equiped:
-			equipment.dequip()
+		# Cannot drop estus flask
+		if cls.owner != estus_flask:
+			inventory.remove(cls.owner)
+			cls.owner.x = player.x
+			cls.owner.y = player.y
+			objects.append(cls.owner)
+			cls.owner.send_to_front()
+			message('Dropped ' + cls.owner.name, libtcod.yellow)
+
+			# when dropping equipment we need to dequip it
+			equipment = cls.owner.equipment
+			if equipment and equipment.is_equiped:
+				equipment.dequip()
+		else:
+			message('Don\'t be a fool...', libtcod.red)
 		
 class Equipment:
 	# objects that can be equiped to player, automatically adds item component
@@ -188,7 +202,8 @@ class Equipment:
 				and obj.equipment.is_equiped):
 				return obj.equipment
 		return None
-	
+
+
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
 	def __init__(self, hp, defense, power, exp, death_function=None, type=None,
@@ -639,16 +654,28 @@ def is_blocked(x, y):
 	
 	return False
 
-def cast_heal():
+def restore_player():
+	global estus_flask, estus_flask_max
+
+	# restore estus usage and player health when resting at the bonfire
+	player.fighter.hp = player.fighter.max_hp
+	estus_flask.item.count = estus_flask_max
+	message('You feel rested.', libtcod.orange)
+
+def cast_heal(cls):
 	# heal the player
 	if player.fighter.hp == player.fighter.max_hp:
 		message('Already at full health', libtcod.red)
 		return 'cancelled'
-	
-	message('Your wounds start to feel better!', libtcod.green)
-	player.fighter.heal(CONSTANTS.HEAL_AMOUNT)
-		
-def cast_lighting():
+
+	if cls.owner == estus_flask:
+		player.fighter.heal(CONSTANTS.ESTUS_FLASK_HEAL)
+		message('You take a lifesaving sip...', libtcod.light_orange)
+	else:
+		player.fighter.heal(CONSTANTS.HEAL_AMOUNT)
+		message('Your wounds feel slightly better.', libtcod.light_azure)
+
+def cast_lighting(cls):
 	# cast a lighting spell that hits the nearest target within a range.
 	monster = closest_monster(CONSTANTS.LIGHTING_RANGE)
 	if monster is None: # no monster in the lighting's range
@@ -661,7 +688,7 @@ def cast_lighting():
 			+ str(CONSTANTS.LIGHTING_DAMAGE) + ' damage!', libtcod.light_blue)
 	monster.fighter.take_damage(CONSTANTS.LIGHTING_DAMAGE)
 	
-def cast_confuse():
+def cast_confuse(cls):
 	# cast confusion spell on selected target.
 	message('Left-click a target or right-click to cancel!', libtcod.light_cyan)
 	monster = target_monster(CONSTANTS.CONFUSE_RANGE)
@@ -675,7 +702,7 @@ def cast_confuse():
 	message('The eys of ' + monster.name + ' look vacant,'
 			' as they start to stumble around!', libtcod.light_green)
 			
-def cast_fireball():
+def cast_fireball(cls):
 	# cast fireball spell onto a target
 	message('Left-click a target or right-click to cancel!', libtcod.light_cyan)
 	(x, y) = target_tile()
@@ -705,7 +732,7 @@ def monster_death(monster):
 	# Turn monster into corpse and remove their functionality.
 	# can't block, attack, move, or be attacked.
 	message(monster.name.capitalize() + ' is dead! You gain ' 
-			+ str(monster.fighter.exp) + ' experience points.', libtcod.orange)
+			+ str(monster.fighter.exp) + ' experience points.', libtcod.yellow)
 	monster.char = '%'
 	monster.color = libtcod.dark_red
 	monster.blocks = False	
@@ -824,6 +851,9 @@ def player_move_or_attack(dx, dy):
 	for object in objects:
 		if object.fighter and object.x == x and object.y == y:
 			target = object
+			break
+		elif object.name == 'bonfire' and object.x == x and object.y == y:
+			restore_player()
 			break
 			
 	# attack if a target is found, move otherwise
@@ -1157,6 +1187,8 @@ def inventory_menu(header):
 		options = []
 		for item in inventory:
 			text = item.name
+			if item.item.count != 1:
+				 text+= ' x' + str(item.item.count)
 			# show additional info about equipment
 			if item.equipment and item.equipment.is_equiped:
 				text += ' (on ' + item.equipment.slot + ')'
@@ -1208,6 +1240,7 @@ def main_menu():
 def new_game():
 	# pieces needed to start a new game
 	global player, inventory, game_msgs, game_state, dungeon_level
+	global estus_flask, estus_flask_max
 	
 	# initialize player object
 	fighter_component = Fighter(hp=100, defense=1, power=2, exp=0,
@@ -1215,7 +1248,7 @@ def new_game():
 	player = Object(0, 0, 'David', '@', libtcod.white, 
 					blocks=True, fighter=fighter_component)
 	player.level = 1
-	
+
 	# initialize our map
 	dungeon_level = 1
 	make_map()
@@ -1226,14 +1259,22 @@ def new_game():
 	
 	# player inventory, list of objects
 	inventory = []
-	
+
 	# Message log - composed of message and message color
 	game_msgs = []
 	
 	# test message, welcoming player to dungeon.
 	message('Welcome stranger! Prepare to perish in the Tombs '
 			'of the Ancient King.', libtcod.yellow)
-			
+
+	# Define estus flask
+	estus_flask_max = CONSTANTS.ESTUS_FLASK_MAX
+	item_component = Item(use_function=cast_heal, count=estus_flask_max)
+	estus_flask = Object(0, 0, 'estus flask', 'u',
+						 libtcod.orange, item=item_component)
+	inventory.append(estus_flask)
+	estus_flask.always_visible = True
+
 	# starting equipment for player
 	equip_component = Equipment(slot='main hand', power_bonus=2)
 	dagger = Object(0, 0, 'dagger', '-',
@@ -1241,11 +1282,11 @@ def new_game():
 	inventory.append(dagger)
 	equip_component.equip()
 	dagger.always_visible = True
-			
+
 def load_game():
 	# load shelved game
 	global map, objects, inventory, player, game_msgs, game_state
-	global stairs, dungeon_level
+	global stairs, dungeon_level, estus_flask, estus_flask_max
 	
 	file = shelve.open('savegame.sav', 'r')
 	map = file['map']
@@ -1256,6 +1297,8 @@ def load_game():
 	game_state = file['game_state']
 	dungeon_level = file['dungeon_level']
 	stairs = objects[file['stairs_index']]
+	estus_flask = inventory[file['estus_index']]
+	estus_flask_max = file['estus_max']
 	file.close()
 	
 	initialize_fov()
@@ -1274,6 +1317,8 @@ def save_game():
 	file['game_state'] = game_state
 	file['dungeon_level'] = dungeon_level
 	file['stairs_index'] = objects.index(stairs)
+	file['estus_index'] = inventory.index(estus_flask)
+	file['estus_max'] = estus_flask_max
 	file.close()
 			
 def initialize_fov():

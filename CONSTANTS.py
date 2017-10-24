@@ -33,8 +33,12 @@ INVENTORY_WIDTH = 50
 LEVEL_SCREEN_WIDTH = 40
 CHARACTER_SCREEN_WIDTH = 30
 
+# Estus flask usage and healing amount
+ESTUS_FLASK_MAX = 5
+ESTUS_FLASK_HEAL = 40
+
 # Amount to heal player by
-HEAL_AMOUNT = 40
+HEAL_AMOUNT = 20
 
 # Number of turns object is confused for
 CONFUSE_NUM_TURNS = 10
