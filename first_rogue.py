@@ -3,7 +3,7 @@ import math
 import textwrap
 import shelve
 
-import CONSTANTS
+import CONSTANTS as constants
 
 class Object:
 # this is a generic object: the player, monster, stairs, tiles, etc...
@@ -271,7 +271,7 @@ class Fighter:
 			
 	def apply_modifier(cls, modifier_name):
 		# mutate the base stats of monster based on their affix modifier
-		modifier = CONSTANTS.MONSTER_PRE_MOD[modifier_name]
+		modifier = constants.MONSTER_PRE_MOD[modifier_name]
 		cls.base_max_hp = cls.base_max_hp + int(round(cls.base_max_hp * modifier))
 		cls.hp = cls.base_max_hp
 		cls.base_power = cls.base_power + int(round(cls.base_power * modifier))
@@ -296,7 +296,7 @@ class BasicMonster:
 
 class ConfusedMonster:
 	# AI for a temporarily confused monster, reverts back to original ai
-	def __init__(self, old_ai, num_turns=CONSTANTS.CONFUSE_NUM_TURNS):
+	def __init__(self, old_ai, num_turns=constants.CONFUSE_NUM_TURNS):
 		self.old_ai = old_ai
 		self.num_turns = num_turns
 		
@@ -385,21 +385,21 @@ def make_map():
 	
 	# Fill map with unblocked tiles.
 	map = [[Tile(True)
-		for y in range(CONSTANTS.MAP_HEIGHT)]
-			for x in range(CONSTANTS.MAP_WIDTH)]
+		for y in range(constants.MAP_HEIGHT)]
+			for x in range(constants.MAP_WIDTH)]
 	
 	rooms = []
 	num_rooms = 0
 	
-	for r in range(CONSTANTS.MAX_ROOMS):
+	for r in range(constants.MAX_ROOMS):
 		# random width and height for rooms.
-		w = libtcod.random_get_int(0, CONSTANTS.ROOM_MIN_SIZE,
-								   CONSTANTS.ROOM_MAX_SIZE)
-		h = libtcod.random_get_int(0, CONSTANTS.ROOM_MIN_SIZE,
-								   CONSTANTS.ROOM_MAX_SIZE)
+		w = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
+								   constants.ROOM_MAX_SIZE)
+		h = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
+								   constants.ROOM_MAX_SIZE)
 		# random position without going out of bounds.
-		x = libtcod.random_get_int(0, 0, CONSTANTS.MAP_WIDTH - w - 1)
-		y = libtcod.random_get_int(0, 0, CONSTANTS.MAP_HEIGHT - h - 1)
+		x = libtcod.random_get_int(0, 0, constants.MAP_WIDTH - w - 1)
+		y = libtcod.random_get_int(0, 0, constants.MAP_HEIGHT - h - 1)
 		
 		# Create the room as a rectangle object.
 		new_room = Rectangle(x, y, w ,h)
@@ -480,17 +480,17 @@ def place_objects(room):
 	global monster_prefix
 	
 	# maximum number of monsters per room, floor dependent
-	max_monsters = from_dungeon_level([[2, 1, CONSTANTS.END_LEVEL],
-									   [3, 4, CONSTANTS.END_LEVEL],
-									   [5, 6, CONSTANTS.END_LEVEL]])
+	max_monsters = from_dungeon_level([[2, 1, constants.END_LEVEL],
+									   [3, 4, constants.END_LEVEL],
+									   [5, 6, constants.END_LEVEL]])
 	# choose random number of monsters.
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
 	monster_chances = {}
 	monster_chances['orc'] = 80 # orc spawn is floor independent
-	monster_chances['troll'] = from_dungeon_level([[15, 3, CONSTANTS.END_LEVEL],
-												   [30, 5, CONSTANTS.END_LEVEL],
-												   [60, 7, CONSTANTS.END_LEVEL]]
+	monster_chances['troll'] = from_dungeon_level([[15, 3, constants.END_LEVEL],
+												   [30, 5, constants.END_LEVEL],
+												   [60, 7, constants.END_LEVEL]]
 												  )
 	# generate chances for a prefix.
 	monster_prefix = {}
@@ -499,11 +499,11 @@ def place_objects(room):
 												   [25, 4, 6]])
 	monster_prefix['Greater'] = from_dungeon_level([[25, 2, 4], [65, 4, 6],
 													[75, 6, 8],
-													[50, 6, CONSTANTS.END_LEVEL]])
+													[50, 6, constants.END_LEVEL]])
 	monster_prefix['Badass'] = from_dungeon_level([[10, 4, 6], [20, 6, 8],
-												  [35, 8, CONSTANTS.END_LEVEL]])
+												  [35, 8, constants.END_LEVEL]])
 	monster_prefix['SuperBadass'] = from_dungeon_level([[5, 6, 8],
-											  [15, 8, CONSTANTS.END_LEVEL]])
+											  [15, 8, constants.END_LEVEL]])
 
 	for i in range(num_monsters):
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -516,7 +516,7 @@ def place_objects(room):
 				# create orc				
 				fighter_component = Fighter(hp=20, defense=0, power=4, exp=35,
 											death_function=monster_death,
-											type=CONSTANTS.ORC, modifier=mod)
+											type=constants.ORC, modifier=mod)
 				ai_component = BasicMonster()
 				monster = Object(x, y, affixed_name, 'o',
 								 libtcod.darker_green, blocks=True,
@@ -525,7 +525,7 @@ def place_objects(room):
 				# create troll
 				fighter_component = Fighter(hp=30, defense=2, power=8, exp=100,
 											death_function=monster_death,
-											type=CONSTANTS.TROLL, modifier=mod)
+											type=constants.TROLL, modifier=mod)
 				ai_component = BasicMonster()
 
 				monster = Object(x, y, affixed_name, 'T',
@@ -535,19 +535,19 @@ def place_objects(room):
 			objects.append(monster)
 		
 	# maximum number of items per room, floor dependent
-	max_items = from_dungeon_level([[2, 1, CONSTANTS.END_LEVEL],
-									[3, 4, CONSTANTS.END_LEVEL],
-									[5, 6, CONSTANTS.END_LEVEL]])
+	max_items = from_dungeon_level([[2, 1, constants.END_LEVEL],
+									[3, 4, constants.END_LEVEL],
+									[5, 6, constants.END_LEVEL]])
 	# choose random number of items to spawn
 	num_items = libtcod.random_get_int(0, 0, max_items)
 	# dictionary of items and there chances of spawn
 	item_chances = {}
 	item_chances['heal'] = 25 # heal spawn is floor independent
-	item_chances['confuse'] = from_dungeon_level([[10, 2, CONSTANTS.END_LEVEL]])
-	item_chances['lighting'] = from_dungeon_level([[25, 4, CONSTANTS.END_LEVEL]])
-	item_chances['fire'] = from_dungeon_level([[25, 6, CONSTANTS.END_LEVEL]])
-	item_chances['sword'] = from_dungeon_level([[5, 4, CONSTANTS.END_LEVEL]])
-	item_chances['shield'] = from_dungeon_level([[15, 8, CONSTANTS.END_LEVEL]])
+	item_chances['confuse'] = from_dungeon_level([[10, 2, constants.END_LEVEL]])
+	item_chances['lighting'] = from_dungeon_level([[25, 4, constants.END_LEVEL]])
+	item_chances['fire'] = from_dungeon_level([[25, 6, constants.END_LEVEL]])
+	item_chances['sword'] = from_dungeon_level([[5, 4, constants.END_LEVEL]])
+	item_chances['shield'] = from_dungeon_level([[15, 8, constants.END_LEVEL]])
 	
 	for i in range(num_items):
 		# choose random spot for items
@@ -669,15 +669,15 @@ def cast_heal(cls):
 		return 'cancelled'
 
 	if cls.owner == estus_flask:
-		player.fighter.heal(CONSTANTS.ESTUS_FLASK_HEAL)
+		player.fighter.heal(constants.ESTUS_FLASK_HEAL)
 		message('You take a lifesaving sip...', libtcod.light_orange)
 	else:
-		player.fighter.heal(CONSTANTS.HEAL_AMOUNT)
+		player.fighter.heal(constants.HEAL_AMOUNT)
 		message('Your wounds feel slightly better.', libtcod.light_azure)
 
 def cast_lighting(cls):
 	# cast a lighting spell that hits the nearest target within a range.
-	monster = closest_monster(CONSTANTS.LIGHTING_RANGE)
+	monster = closest_monster(constants.LIGHTING_RANGE)
 	if monster is None: # no monster in the lighting's range
 		message('Monsters out of range!', libtcod.red)
 		return 'cancelled'
@@ -685,13 +685,13 @@ def cast_lighting(cls):
 	# strike the closest monster!	
 	message('A lighting bolt strikes ' + monster.name 
 			+ ' with a loud thunder! The target suffers ' 
-			+ str(CONSTANTS.LIGHTING_DAMAGE) + ' damage!', libtcod.light_blue)
-	monster.fighter.take_damage(CONSTANTS.LIGHTING_DAMAGE)
+			+ str(constants.LIGHTING_DAMAGE) + ' damage!', libtcod.light_blue)
+	monster.fighter.take_damage(constants.LIGHTING_DAMAGE)
 	
 def cast_confuse(cls):
 	# cast confusion spell on selected target.
 	message('Left-click a target or right-click to cancel!', libtcod.light_cyan)
-	monster = target_monster(CONSTANTS.CONFUSE_RANGE)
+	monster = target_monster(constants.CONFUSE_RANGE)
 	if monster is None: # no monster selected		
 		return 'cancelled'
 	
@@ -710,12 +710,12 @@ def cast_fireball(cls):
 		return 'cancelled'
 		
 	message('The fireball explodes burning everything within ' 
-			+ str(CONSTANTS.FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
+			+ str(constants.FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
 	for object in objects: # damage all monsters and player in range
-		if object.distance(x, y) <= CONSTANTS.FIREBALL_RADIUS and object.fighter:
+		if object.distance(x, y) <= constants.FIREBALL_RADIUS and object.fighter:
 			message(object.name + ' is caught in the explosion taking ' 
-					+ str(CONSTANTS.FIREBALL_DAMAGE) + ' hitpoints.', libtcod.orange)
-			object.fighter.take_damage(CONSTANTS.FIREBALL_DAMAGE)
+					+ str(constants.FIREBALL_DAMAGE) + ' hitpoints.', libtcod.orange)
+			object.fighter.take_damage(constants.FIREBALL_DAMAGE)
 
 def player_death(player):
 	# Modify game state in the event the player dies.
@@ -749,27 +749,27 @@ def loot_drop(monster):
 	
 	# List of objects that can be dropped, corresponding to the type argument
 	type = monster.fighter.type
-	loot_chances = CONSTANTS.MONSTER_LOOT_POOL[type]
+	loot_chances = constants.MONSTER_LOOT_POOL[type]
 	choice = random_choice(loot_chances)
 	
 	item = None
-	if type == CONSTANTS.ORC:	
-		if choice == CONSTANTS.ORA:
+	if type == constants.ORC:	
+		if choice == constants.ORA:
 			equip_component = Equipment(slot='main hand', power_bonus=3)
-			item = Object(monster.x, monster.y, CONSTANTS.ORA, 'R',
+			item = Object(monster.x, monster.y, constants.ORA, 'R',
 						  libtcod.light_green, equipment=equip_component)		
-		elif choice == CONSTANTS.RATIONS:
+		elif choice == constants.RATIONS:
 			item_component = Item(use_function=cast_heal)
-			item = Object(monster.x, monster.y, CONSTANTS.RATIONS, 'x', libtcod.white,
+			item = Object(monster.x, monster.y, constants.RATIONS, 'x', libtcod.white,
 						  item=item_component, always_visible=True)
-		elif choice == CONSTANTS.GOLD:
+		elif choice == constants.GOLD:
 			message('5 gold was dropped by the orc', libtcod.gold)
-	elif type == CONSTANTS.TROLL:
-		if choice == CONSTANTS.CLUB:
+	elif type == constants.TROLL:
+		if choice == constants.CLUB:
 			equip_component = Equipment(slot='main hand', power_bonus=5)
-			item = Object(monster.x, monster.y, CONSTANTS.CLUB, 'P',
+			item = Object(monster.x, monster.y, constants.CLUB, 'P',
 						  libtcod.brown, equipment=equip_component)
-		elif choice == CONSTANTS.GOLD:
+		elif choice == constants.GOLD:
 			message('8 gold was dropped by the troll', libtcod.gold)
 	if item:
 		objects.append(item)
@@ -852,8 +852,8 @@ def player_move_or_attack(dx, dy):
 		if object.fighter and object.x == x and object.y == y:
 			target = object
 			break
-		elif object.name == 'bonfire' and object.x == x and object.y == y:
-			restore_player()
+		elif object == bonfire and object.x == x and object.y == y:
+			bonfire_menu()
 			break
 			
 	# attack if a target is found, move otherwise
@@ -876,8 +876,8 @@ def get_all_equiped(obj):
 		
 def check_level_up():
 	# check if player has enough exp to level up
-	level_up_exp = (CONSTANTS.LEVEL_UP_BASE 
-				   + (player.level * CONSTANTS.LEVEL_UP_FACTOR))
+	level_up_exp = (constants.LEVEL_UP_BASE 
+				   + (player.level * constants.LEVEL_UP_FACTOR))
 	if player.fighter.exp >= level_up_exp:
 		# level up y'all!
 		player.level += 1
@@ -891,7 +891,7 @@ def check_level_up():
 						  ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + '->' + str(player.fighter.max_hp + 20) + ')',
 						  'Strength (+1 Attack, from ' + str(player.fighter.power) + '->' + str(player.fighter.power + 1) + ')',
 						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'], 
-						  CONSTANTS.LEVEL_SCREEN_WIDTH, 'Level up!')
+						  constants.LEVEL_SCREEN_WIDTH, 'Level up!')
 			if choice == 0:
 				player.fighter.base_max_hp += 20
 				player.fighter.hp = player.fighter.max_hp
@@ -901,7 +901,7 @@ def check_level_up():
 			elif choice == 2:
 				player.fighter.base_defense += 1
 				player.fighter.hp = player.fighter.max_hp
-	
+
 def handle_keys():
 	# Handle key presses inputted by player.
 	global key, stairs
@@ -954,21 +954,21 @@ def handle_keys():
 			if key.vk == libtcod.KEY_ENTER: # go down stairs
 				if stairs.x == player.x and stairs.y == player.y:
 					next_level()
-			if key_chr == 'c': # check character information
-				level_up_exp = (CONSTANTS.LEVEL_UP_BASE 
-								+ player.level * CONSTANTS.LEVEL_UP_FACTOR)
+			if key_chr == 's': # check character information
+				level_up_exp = (constants.LEVEL_UP_BASE 
+								+ player.level * constants.LEVEL_UP_FACTOR)
 				msgbox('Stats\n\nLevel ' + str(player.level) + '\nExperience: '
 					   + str(player.fighter.exp) + '\nExperience to level up: '
 					   + str(level_up_exp) + '\n\nMaximum HP: ' 
 					   + str(player.fighter.max_hp) + '\nAttack: ' 
 					   + str(player.fighter.power) + '\nDefense: ' 
 					   + str(player.fighter.defense),
-					   CONSTANTS.CHARACTER_SCREEN_WIDTH)
+					   constants.CHARACTER_SCREEN_WIDTH)
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
-						'\nDrop item:d\nPick up/loot: g\nCharacter stats: c\n'
+						'\nDrop item:d\nPick up/loot: g\nCharacter stats: s\n'
 						'Wait:p\nMovement: arrow keys\n')
-				menu(text, [], CONSTANTS.CHARACTER_SCREEN_WIDTH)
+				menu(text, [], constants.CHARACTER_SCREEN_WIDTH)
 
 			return 'didn\'t-take-turn'
 
@@ -988,8 +988,8 @@ def render_all():
 		# recompute fov if needed.
 		fov_recompute = False
 		libtcod.map_compute_fov(fov_map, player.x, player.y, 
-								CONSTANTS.TORCH_RADIUS, 
-								CONSTANTS.FOV_LIGHT_WALLS, CONSTANTS.FOV_ALGO)
+								constants.TORCH_RADIUS, 
+								constants.FOV_LIGHT_WALLS, constants.FOV_ALGO)
 
 	# slightly change the perlin noise parameter
 	fov_torchx += 0.2
@@ -1002,8 +1002,8 @@ def render_all():
 
 	# go through all tiles, and set their background color according to FOV.
 	# add torch effect in player's fov
-	for y in range(CONSTANTS.MAP_HEIGHT):
-		for x in range(CONSTANTS.MAP_WIDTH):
+	for y in range(constants.MAP_HEIGHT):
+		for x in range(constants.MAP_WIDTH):
 			visible = libtcod.map_is_in_fov(fov_map, x, y)
 			wall = map[x][y].block_sight
 			if not visible:
@@ -1012,27 +1012,27 @@ def render_all():
 				# out of player's fov
 					if wall:
 						libtcod.console_put_char_ex(con, x, y, '#',
-							libtcod.lighter_sepia, CONSTANTS.color_dark_wall)
+							libtcod.lighter_sepia, constants.color_dark_wall)
 					else:
 						libtcod.console_put_char_ex(con, x, y, '-',
-							libtcod.lighter_sepia, CONSTANTS.color_dark_ground)
+							libtcod.lighter_sepia, constants.color_dark_ground)
 			else:
 				# in player's FOV
 				if wall:
-					base = CONSTANTS.color_dark_wall
-					light = CONSTANTS.color_light_wall
+					base = constants.color_dark_wall
+					light = constants.color_light_wall
 					char = '#'
 				else:
-					base = CONSTANTS.color_dark_ground
-					light = CONSTANTS.color_light_ground
+					base = constants.color_dark_ground
+					light = constants.color_light_ground
 					char = '-'
 
 				r = float(x - fov_px + dx) * (x - fov_px + dx) + \
 					(y - fov_py + dy) * (y - fov_py + dy)
-				if r < CONSTANTS.SQUARED_TORCH_RADIUS:
+				if r < constants.SQUARED_TORCH_RADIUS:
 					# Calculate coefficient for interpolation
-					l = (CONSTANTS.SQUARED_TORCH_RADIUS - r) / \
-						CONSTANTS.SQUARED_TORCH_RADIUS \
+					l = (constants.SQUARED_TORCH_RADIUS - r) / \
+						constants.SQUARED_TORCH_RADIUS \
 						+ di
 					if l < 0.0:
 						l = 0.0
@@ -1052,8 +1052,8 @@ def render_all():
 
 	# Blitting to the console we created,
 	# draws everything we put onto the destination console.
-	libtcod.console_blit(con, 0, 0, CONSTANTS.SCREEN_WIDTH, 
-						 CONSTANTS.SCREEN_HEIGHT, 0, 0, 0)
+	libtcod.console_blit(con, 0, 0, constants.SCREEN_WIDTH, 
+						 constants.SCREEN_HEIGHT, 0, 0, 0)
 	
 	# prepare to render GUI panel.
 	libtcod.console_set_default_background(panel, libtcod.black)
@@ -1063,12 +1063,12 @@ def render_all():
 	y = 1
 	for (line, color) in game_msgs:
 		libtcod.console_set_default_foreground(panel, color)
-		libtcod.console_print_ex(panel, CONSTANTS.MSG_X, y,
+		libtcod.console_print_ex(panel, constants.MSG_X, y,
 								 libtcod.BKGND_NONE, libtcod.LEFT, line)
 		y += 1	
 
 	# show player stats
-	render_bar(1, 1, CONSTANTS.BAR_WIDTH, 'HP', player.fighter.hp,
+	render_bar(1, 1, constants.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
 			   
 	# display current dungeon level to player
@@ -1087,8 +1087,8 @@ def render_all():
 							 libtcod.LEFT, get_names_under_mouse())
 	
 	# blit contents of 'panel' to root console
-	libtcod.console_blit(panel, 0, 0, CONSTANTS.SCREEN_WIDTH, 
-						 CONSTANTS.PANEL_HEIGHT, 0, 0, CONSTANTS.PANEL_Y)
+	libtcod.console_blit(panel, 0, 0, constants.SCREEN_WIDTH, 
+						 constants.PANEL_HEIGHT, 0, 0, constants.PANEL_Y)
 
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 	# render bar (HP, exp, etc...) Calculate width of bar.
@@ -1115,11 +1115,11 @@ def message(new_msg, color=libtcod.white):
 	# Append messages to game feed while removing old ones if buffer is full.
 
 	# split message among multiple lines if needed.
-	new_msg_lines = textwrap.wrap(new_msg, CONSTANTS.MSG_WIDTH)
+	new_msg_lines = textwrap.wrap(new_msg, constants.MSG_WIDTH)
 
 	for line in new_msg_lines:
 		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == CONSTANTS.MSG_HEIGHT:
+		if len(game_msgs) == constants.MSG_HEIGHT:
 			del game_msgs[0]
 
 		# add the new line as a tuple, with text and color.
@@ -1136,7 +1136,7 @@ def menu(header, options, width):
 
 	# calculate total height for the header (after auto wrap) and 1 line/option
 	header_height = libtcod.console_get_height_rect(con, 0, 0, width,
-													CONSTANTS.SCREEN_HEIGHT,
+													constants.SCREEN_HEIGHT,
 													header)
 	if header == '':
 		header_height = 0
@@ -1161,8 +1161,8 @@ def menu(header, options, width):
 		letter_index += 1
 
 	# blit the contents of 'window' to the root console
-	x = CONSTANTS.SCREEN_WIDTH/2 - width/2
-	y = CONSTANTS.SCREEN_HEIGHT/2 - height/2
+	x = constants.SCREEN_WIDTH/2 - width/2
+	y = constants.SCREEN_HEIGHT/2 - height/2
 	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 
 	# present the root console to the player and wait for a key press
@@ -1194,13 +1194,26 @@ def inventory_menu(header):
 				text += ' (on ' + item.equipment.slot + ')'
 			options.append(text)
 
-	index = menu(header, options, CONSTANTS.INVENTORY_WIDTH)
+	index = menu(header, options, constants.INVENTORY_WIDTH)
 
 	# if an item was chosen, return it
 	if index is None or len(inventory) == 0:
 		return None
 
 	return inventory[index].item
+	
+def bonfire_menu():
+	# Bonfire menu where player levels up
+
+	restore_player()
+	
+	# Build the options for this menu
+	choice = menu('', ['Level up', 'Cancel'], constants.BONFIRE_WIDTH)
+	
+	if choice == 0: # level up
+		message('Level up', libtcod.white)
+	elif choice == 1: # cancel
+		message('Cancelled', libtcod.white)
 
 def main_menu():
 	# main menu of game
@@ -1212,12 +1225,12 @@ def main_menu():
 		
 		# title of game and author
 		libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-		libtcod.console_print_ex(0, CONSTANTS.SCREEN_WIDTH/2,
-								 CONSTANTS.SCREEN_HEIGHT/2-4,
+		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
+								 constants.SCREEN_HEIGHT/2-4,
 								 libtcod.BKGND_NONE, libtcod.CENTER, 
 								 'TOMBS OF THE ANCIENT KINGS')
-		libtcod.console_print_ex(0, CONSTANTS.SCREEN_WIDTH/2,
-								 CONSTANTS.SCREEN_HEIGHT-2,
+		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
+								 constants.SCREEN_HEIGHT-2,
 								 libtcod.BKGND_NONE, libtcod.CENTER, 
 								 'By David')
 		
@@ -1268,7 +1281,7 @@ def new_game():
 			'of the Ancient King.', libtcod.yellow)
 
 	# Define estus flask
-	estus_flask_max = CONSTANTS.ESTUS_FLASK_MAX
+	estus_flask_max = constants.ESTUS_FLASK_MAX
 	item_component = Item(use_function=cast_heal, count=estus_flask_max)
 	estus_flask = Object(0, 0, 'estus flask', 'u',
 						 libtcod.orange, item=item_component)
@@ -1332,9 +1345,9 @@ def initialize_fov():
 	fov_recompute = True
 	
 	# field of view map
-	fov_map = libtcod.map_new(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
-	for y in range(CONSTANTS.MAP_HEIGHT):
-		for x in range(CONSTANTS.MAP_WIDTH):
+	fov_map = libtcod.map_new(constants.MAP_WIDTH, constants.MAP_HEIGHT)
+	for y in range(constants.MAP_HEIGHT):
+		for x in range(constants.MAP_WIDTH):
 			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, 
 									   not map[x][y].blocked)
 	noise = libtcod.noise_new(2)
@@ -1362,10 +1375,10 @@ def play_game():
 		
 		# Flush our changes to the console.
 		libtcod.console_flush()
-		
-		# check if player has leveled up
+
+		# Check if player has enough exp to level up
 		check_level_up()
-		
+
 		# Clear objects in list.
 		for object in objects:
 			object.clear()
@@ -1386,11 +1399,11 @@ def play_game():
 libtcod.console_set_custom_font('fonts/consolas12x12_gs_tc.png',
 								libtcod.FONT_TYPE_GREYSCALE 
 								| libtcod.FONT_LAYOUT_TCOD)
-libtcod.console_init_root(CONSTANTS.SCREEN_WIDTH, CONSTANTS.SCREEN_HEIGHT, 
+libtcod.console_init_root(constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT, 
 						  'python/libtcod tutorial', False)
-libtcod.sys_set_fps(CONSTANTS.LIMIT_FPS)
-con = libtcod.console_new(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
-panel = libtcod.console_new(CONSTANTS.SCREEN_WIDTH, CONSTANTS.PANEL_HEIGHT)
+libtcod.sys_set_fps(constants.LIMIT_FPS)
+con = libtcod.console_new(constants.MAP_WIDTH, constants.MAP_HEIGHT)
+panel = libtcod.console_new(constants.SCREEN_WIDTH, constants.PANEL_HEIGHT)
 
 # start this bad boy
 main_menu()
