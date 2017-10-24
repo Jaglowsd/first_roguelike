@@ -363,7 +363,7 @@ def create_v_tunnel(y1, y2, x):
 
 def make_map():
 	# randomly generates rooms to design a map.
-	global map, objects, stairs
+	global map, objects, stairs, bonfire
 	
 	# Store our objects to iterate through
 	objects = [player]
@@ -406,8 +406,12 @@ def make_map():
 
 			if num_rooms == 0:
 				# first room, where player starts. Place them in center.
-				player.x = new_x
+				player.x = new_x + 1
 				player.y = new_y
+
+				bonfire = Object(new_x, new_y, 'bonfire', '&', libtcod.flame,
+									blocks=True, always_visible=True)
+				objects.append(bonfire)
 
 			# all rooms after the first.
 			# connect it to the previous room with a tunnel.
