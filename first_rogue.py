@@ -846,7 +846,7 @@ def player_move_or_attack(dx, dy):
 	x = player.x + dx
 	y = player.y + dy
 	
-	# examine if there is an attackable object
+	# examine if there is an attackable object or bonfire
 	target = None
 	for object in objects:
 		if object.fighter and object.x == x and object.y == y:
