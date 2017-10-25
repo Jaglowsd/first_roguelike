@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import math
 import textwrap
 import shelve
+import sys
 
 import CONSTANTS
 
@@ -48,6 +49,9 @@ class Object:
 		if not is_blocked(cls.x + dx, cls.y + dy):
 			cls.x += dx
 			cls.y += dy
+			# regenerate 1 stamina point per step.
+			if cls.fighter.stamina != cls.fighter.max_stamina:
+				cls.fighter.stamina += 1
 			
 	def move_towards(cls, target_x, target_y):
 		# vector from this object to tagret object.
@@ -145,16 +149,20 @@ class Item:
 		equipment = cls.owner.equipment
 		if equipment and equipment.is_equiped:
 			equipment.dequip()
-		
+
+
 class Equipment:
 	# objects that can be equiped to player, automatically adds item component
-	def __init__(self, slot, power_bonus=0, defense_bonus=0, max_hp_bonus=0):
+	def __init__(self, slot, power_bonus=0, defense_bonus=0,
+				 max_hp_bonus=0, max_stamina_bonus=0, stamina_usage=0):
 		# where on the players person its equiped (i.e. slot)
 		self.slot = slot
 		self.is_equiped = False
 		self.power_bonus = power_bonus
 		self.defense_bonus = defense_bonus
 		self.max_hp_bonus = max_hp_bonus		
+		self.max_stamina_bonus = max_stamina_bonus
+		self.stamina_usage = stamina_usage
 		
 	def toggle_equip(cls): # toggle equip/dequip status
 		if cls.is_equiped:
@@ -188,15 +196,22 @@ class Equipment:
 				and obj.equipment.is_equiped):
 				return obj.equipment
 		return None
+
+	def use_stamina(cls):
+		# equipment usage drains stamina
+		player.fighter.stamina -= cls.stamina_usage
+
 	
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense, power, exp, death_function=None, type=None,
-				 modifier=None):
+	def __init__(self, hp, defense, power, stamina, exp, death_function=None,
+				 type=None,  modifier=None):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_defense = defense
 		self.base_power = power
+		self.base_max_stamina = stamina # player stamina
+		self.stamina = stamina
 		self.exp = exp # amount of experience given to player
 		self.death_function = death_function		
 		self.type = type # What kind of enemy this object is
@@ -220,6 +235,11 @@ class Fighter:
 		bonus = sum(equipment.max_hp_bonus for equipment in get_all_equiped(self.owner))
 		return self.base_max_hp + bonus
 
+	@property
+	def max_stamina(self): # return actual stamina by summing base stamina to all bonuses
+		bonus = sum(equipment.max_stamina_bonus for equipment in get_all_equiped(self.owner))
+		return self.base_max_stamina + bonus
+
 	def take_damage(cls, damage):
 		# apply damage if possible
 		if damage > 0:
@@ -236,18 +256,31 @@ class Fighter:
 						player.fighter.exp += cls.exp
 
 	def attack(cls, target):
-		# simple formula to calculate damage
+		# simple formula to calculate damage and stamina consumption
+		(stamina_available, equip) = cls.calculate_stamina_use()
 		damage = cls.power - target.fighter.defense
+		if stamina_available < 0:
+			message('You try to attack but are too exhausted...', libtcod.red)
+		elif damage <= 0:
+			message(cls.owner.name.capitalize() + ' attacks ' + target.name
+					+ ' but it has no effect!')
+		else: # Otherwise, target takes damage
+			message(cls.owner.name.capitalize() + ' attacks ' + target.name
+					+ ' for ' + str(damage) + ' hit points.')
+			target.fighter.take_damage(damage)
+			equip.use_stamina()
 
+	def monster_attack(cls, target):
+		# basic monster attack
+		damage = cls.power - target.fighter.defense
 		if damage > 0:
-			# target takes damage
 			message(cls.owner.name.capitalize() + ' attacks ' + target.name 
 					+ ' for ' + str(damage) + ' hit points.')
 			target.fighter.take_damage(damage)
 		else:
-			message(cls.owner.name.capitalize() + ' attacks ' + target.name 
+			message(cls.owner.name.capitalize() + ' attacks ' + target.name
 					+ ' but it has no effect!')
-					
+
 	def heal(cls, amount):
 		# heal player by the given amount, setting hp to max if it goes over
 		cls.hp += amount
@@ -263,6 +296,22 @@ class Fighter:
 		cls.base_defense = cls.base_defense + int(round(cls.base_defense * modifier))
 		cls.exp = cls.exp + int(round(cls.exp * modifier))
 
+	def calculate_stamina_use(cls):
+		# Calculate equipment stamina usage
+		main = None
+		equiped = get_all_equiped(player)
+		for equipment in equiped:
+			if equipment.slot == 'main hand':
+				main = equipment
+
+		if main is not None:
+			stamina_available = player.fighter.stamina \
+								- main.stamina_usage
+		else:
+			stamina_available = player.fighter.stamina - 1
+
+		return (stamina_available, main)
+
 
 class BasicMonster:
 	# AI for basic monsters
@@ -276,7 +325,7 @@ class BasicMonster:
 				
 			# attack player if within 1 tile and player has hp.
 			elif player.fighter.hp > 0:
-				monster.fighter.attack(player)
+				monster.fighter.monster_attack(player)
 
 
 class ConfusedMonster:
@@ -499,7 +548,8 @@ def place_objects(room):
 			(affixed_name, mod) = choose_affix(choice)
 			if choice == 'orc':
 				# create orc				
-				fighter_component = Fighter(hp=20, defense=0, power=4, exp=35,
+				fighter_component = Fighter(hp=20, defense=0, power=4,
+											stamina=1, exp=35,
 											death_function=monster_death,
 											type=CONSTANTS.ORC, modifier=mod)
 				ai_component = BasicMonster()
@@ -508,7 +558,8 @@ def place_objects(room):
 								 fighter=fighter_component, ai=ai_component)
 			elif choice == 'troll':
 				# create troll
-				fighter_component = Fighter(hp=30, defense=2, power=8, exp=100,
+				fighter_component = Fighter(hp=30, defense=2, power=8,
+											stamina=1, exp=100,
 											death_function=monster_death,
 											type=CONSTANTS.TROLL, modifier=mod)
 				ai_component = BasicMonster()
@@ -564,7 +615,8 @@ def place_objects(room):
 							  item=item_component, always_visible=True)
 			elif choice == 'sword':
 				# sword (5% chance from floor 4 onwards)
-				equip_component = Equipment(slot='main hand', power_bonus=3)
+				equip_component = Equipment(slot='main hand', power_bonus=3,
+											stamina_usage=3)
 				item = Object(x, y, 'Beast Slayer', '/', libtcod.sky,
 							  equipment=equip_component)
 			elif choice == 'shield':
@@ -728,7 +780,8 @@ def loot_drop(monster):
 	item = None
 	if type == CONSTANTS.ORC:	
 		if choice == CONSTANTS.ORA:
-			equip_component = Equipment(slot='main hand', power_bonus=3)
+			equip_component = Equipment(slot='main hand',
+										power_bonus=3, stamina_usage=3)
 			item = Object(monster.x, monster.y, CONSTANTS.ORA, 'R',
 						  libtcod.light_green, equipment=equip_component)		
 		elif choice == CONSTANTS.RATIONS:
@@ -739,7 +792,8 @@ def loot_drop(monster):
 			message('5 gold was dropped by the orc', libtcod.gold)
 	elif type == CONSTANTS.TROLL:
 		if choice == CONSTANTS.CLUB:
-			equip_component = Equipment(slot='main hand', power_bonus=5)
+			equip_component = Equipment(slot='main hand', power_bonus=5,
+										stamina_usage=5)
 			item = Object(monster.x, monster.y, CONSTANTS.CLUB, 'P',
 						  libtcod.brown, equipment=equip_component)
 		elif choice == CONSTANTS.GOLD:
@@ -843,7 +897,7 @@ def get_all_equiped(obj):
 		return equiped_list
 	else:
 		return [] # other objects by default do not have equipment
-		
+
 def check_level_up():
 	# check if player has enough exp to level up
 	level_up_exp = (CONSTANTS.LEVEL_UP_BASE 
@@ -897,6 +951,9 @@ def handle_keys():
 		elif key.vk == libtcod.KEY_RIGHT:
 			player_move_or_attack(1, 0)
 		elif chr(key.c) == 'p':
+			# regenerate 1 stamina while waiting
+			if player.fighter.stamina != player.fighter.max_stamina:
+				player.fighter.stamina += 1
 			pass # do nothing, i.e. waste a turn
 
 		else:
@@ -936,8 +993,8 @@ def handle_keys():
 					   CONSTANTS.CHARACTER_SCREEN_WIDTH)
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
-						'\nDrop item:d\nPick up/loot: g\nCharacter stats: c\n'
-						'Wait:p\nMovement: arrow keys\n')
+						'\nDrop item: d\nPick up/loot: g\nCharacter stats: c\n'
+						'Wait: p\nMovement: arrow keys\n')
 				menu(text, [], CONSTANTS.CHARACTER_SCREEN_WIDTH)
 
 			return 'didn\'t-take-turn'
@@ -1040,9 +1097,12 @@ def render_all():
 	# show player stats
 	render_bar(1, 1, CONSTANTS.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
+	render_bar(1, 2, CONSTANTS.BAR_WIDTH, 'Stamina', player.fighter.stamina,
+			   player.fighter.max_stamina, libtcod.dark_green,
+			   libtcod.darkest_green)
 			   
 	# display current dungeon level to player
-	libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 
+	libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT,
 							'Dungeon Level ' + str(dungeon_level))
 
 	# Player controls
@@ -1210,7 +1270,7 @@ def new_game():
 	global player, inventory, game_msgs, game_state, dungeon_level
 	
 	# initialize player object
-	fighter_component = Fighter(hp=100, defense=1, power=2, exp=0,
+	fighter_component = Fighter(hp=100, defense=1, power=2, stamina=30, exp=0,
 								death_function=player_death)
 	player = Object(0, 0, 'David', '@', libtcod.white, 
 					blocks=True, fighter=fighter_component)
@@ -1235,7 +1295,8 @@ def new_game():
 			'of the Ancient King.', libtcod.yellow)
 			
 	# starting equipment for player
-	equip_component = Equipment(slot='main hand', power_bonus=2)
+	equip_component = Equipment(slot='main hand', power_bonus=2,
+								stamina_usage=2)
 	dagger = Object(0, 0, 'dagger', '-',
 					libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
