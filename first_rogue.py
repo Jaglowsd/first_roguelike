@@ -274,7 +274,7 @@ class Fighter:
 		# basic monster attack
 		damage = cls.power - target.fighter.defense
 		if damage > 0:
-			message(cls.owner.name.capitalize() + ' attacks ' + target.name 
+			message(cls.owner.name.capitalize() + ' attacks ' + target.name
 					+ ' for ' + str(damage) + ' hit points.')
 			target.fighter.take_damage(damage)
 		else:
