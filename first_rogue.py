@@ -1120,67 +1120,97 @@ def render_all():
 
 	# Blitting to the console we created,
 	# draws everything we put onto the destination console.
-	libtcod.console_blit(con, 0, 0, constants.SCREEN_WIDTH, 
-						 constants.SCREEN_HEIGHT, 0, 0, 0)
+	libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
+						 constants.MAP_HEIGHT, 0,
+						 constants.MAP_X, constants.MAP_Y)
 	
-	# prepare to render GUI panel.
-	libtcod.console_set_default_background(panel, libtcod.black)
-	libtcod.console_clear(panel)
+	###############
+	## MSG Panel ##
+	###############
+	# prepare to render msg panel.
+	libtcod.console_set_default_background(msg_panel, libtcod.darkest_grey)
+	libtcod.console_clear(msg_panel)
 	
 	# print game feed, one message at a time.	
 	y = 1
 	for (line, color) in game_msgs:
-		libtcod.console_set_default_foreground(panel, color)
-		libtcod.console_print_ex(panel, constants.MSG_X, y,
+		libtcod.console_set_default_foreground(msg_panel, color)
+		libtcod.console_print_ex(msg_panel, constants.MSG_X+1, y,
 								 libtcod.BKGND_NONE, libtcod.LEFT, line)
 		y += 1	
+
+	# blit contents of 'msg panel' to root console
+	libtcod.console_blit(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
+						 constants.MSG_PANEL_HEIGHT,
+						 0, constants.MSG_X, constants.MSG_Y)
+
+	#################
+	## Stats Panel ##
+	#################
+	# prepare to render msg panel.
+	libtcod.console_set_default_background(stats_panel, libtcod.darkest_grey)
+	libtcod.console_clear(stats_panel)
 
 	# show player stats
 	render_bar(1, 1, constants.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
-	render_bar(1, 2, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
+	render_bar(1, 3, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
 			   player.fighter.max_stamina, libtcod.dark_green,
 			   libtcod.darkest_green)
-	libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT,
-							'Souls:  ' + str(player.fighter.souls))
-			   
+	libtcod.console_print_ex(stats_panel, 1, constants.STATS_PANEL_HEIGHT - 1,
+							libtcod.BKGND_NONE, libtcod.LEFT,
+							'Souls  ' + str(player.fighter.souls))
+
 	# display current dungeon level to player
-	libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT,
+	libtcod.console_print_ex(stats_panel, 1, 7, libtcod.BKGND_NONE, libtcod.LEFT,
 							'Dungeon Level ' + str(dungeon_level))
 
 	# Player controls
 	if dungeon_level == 1:
 		text = 'Press / for controls'
-		libtcod.console_print_ex(panel, 1, 5, libtcod.BKGND_NONE, libtcod.LEFT,
+		libtcod.console_print_ex(stats_panel, 1, 9, libtcod.BKGND_NONE, libtcod.LEFT,
 							text)
 
+	# blit contents of 'stats panel' to root console
+	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
+						 constants.STATS_PANEL_HEIGHT,
+						 0, constants.STATS_X, constants.STATS_Y)
+
+	##################
+	## Hotkey Panel ##
+	##################
+	# prepare to render msg panel.
+	libtcod.console_set_default_background(hotkey_panel, libtcod.darkest_grey)
+	libtcod.console_clear(hotkey_panel)
+
 	# display names of objects under the mouse.
-	libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-	libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE,
+	libtcod.console_set_default_foreground(hotkey_panel, libtcod.white)
+	libtcod.console_print_ex(hotkey_panel, 1, 1, libtcod.BKGND_NONE,
 							 libtcod.LEFT, get_names_under_mouse())
-	
-	# blit contents of 'panel' to root console
-	libtcod.console_blit(panel, 0, 0, constants.SCREEN_WIDTH, 
-						 constants.PANEL_HEIGHT, 0, 0, constants.PANEL_Y)
+
+	# blit contents of 'hotkey panel' to root console
+	libtcod.console_blit(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
+						 constants.HOTKEY_PANEL_HEIGHT,
+						 0, constants.HOTKEY_X, constants.HOTKEY_Y)
 
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 	# render bar (HP, exp, etc...) Calculate width of bar.
 	bar_width = int(float(value) / maximum * total_width)
 
 	# render the background first
-	libtcod.console_set_default_background(panel, back_color)
-	libtcod.console_rect(panel, x, y, total_width,
+	libtcod.console_set_default_background(stats_panel, back_color)
+	libtcod.console_rect(stats_panel, x, y, total_width,
 						 1, False, libtcod.BKGND_SCREEN)
 
 	# render bar on top
-	libtcod.console_set_default_background(panel, bar_color)
+	libtcod.console_set_default_background(stats_panel, bar_color)
 	if bar_width > 0:
-		libtcod.console_rect(panel, x, y, bar_width,
+		libtcod.console_rect(stats_panel, x, y, bar_width,
 							 1, False, libtcod.BKGND_SCREEN)
 
 	# text with values to clarify the bar
-	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE,
+	libtcod.console_set_default_foreground(stats_panel, libtcod.white)
+	libtcod.console_print_ex(stats_panel, x + total_width / 2, y, libtcod.BKGND_NONE,
 							 libtcod.CENTER,
 							 name + ': ' + str(value) + '/' + str(maximum))
 
@@ -1188,11 +1218,11 @@ def message(new_msg, color=libtcod.white):
 	# Append messages to game feed while removing old ones if buffer is full.
 
 	# split message among multiple lines if needed.
-	new_msg_lines = textwrap.wrap(new_msg, constants.MSG_WIDTH)
+	new_msg_lines = textwrap.wrap(new_msg, constants.MSG_PANEL_WIDTH)
 
 	for line in new_msg_lines:
 		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == constants.MSG_HEIGHT:
+		if len(game_msgs) == constants.MSG_PANEL_HEIGHT:
 			del game_msgs[0]
 
 		# add the new line as a tuple, with text and color.
@@ -1408,7 +1438,19 @@ def save_game():
 	file['estus_index'] = inventory.index(estus_flask)
 	file['estus_max'] = estus_flask_max
 	file.close()
-			
+
+	clear_consoles()
+
+def clear_consoles():
+	# clear contents of all consoles
+
+	libtcod.console_clear(msg_panel)
+	libtcod.console_clear(hotkey_panel)
+	libtcod.console_clear(stats_panel)
+	libtcod.console_clear(con)
+
+	libtcod.console_flush()
+
 def initialize_fov():
 	# create fov map
 	global fov_map, fov_recompute, fov_noise, noise
@@ -1474,8 +1516,16 @@ libtcod.console_set_custom_font('fonts/consolas12x12_gs_tc.png',
 libtcod.console_init_root(constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT, 
 						  'python/libtcod tutorial', False)
 libtcod.sys_set_fps(constants.LIMIT_FPS)
+
+# Set height and width of panels
+# Map console
 con = libtcod.console_new(constants.MAP_WIDTH, constants.MAP_HEIGHT)
-panel = libtcod.console_new(constants.SCREEN_WIDTH, constants.PANEL_HEIGHT)
+# Game feed panel
+msg_panel = libtcod.console_new(constants.MSG_PANEL_WIDTH, constants.MSG_PANEL_HEIGHT)
+# Player stats panel
+stats_panel = libtcod.console_new(constants.STATS_PANEL_WIDTH, constants.STATS_PANEL_HEIGHT)
+# Hotkey panel
+hotkey_panel = libtcod.console_new(constants.HOTKEY_PANEL_WIDTH, constants.HOTKEY_PANEL_HEIGHT)
 
 # start this bad boy
 main_menu()
