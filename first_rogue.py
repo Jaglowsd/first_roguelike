@@ -218,7 +218,7 @@ class Equipment:
 
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense, power, stamina, exp, death_function=None,
+	def __init__(self, hp, defense, power, stamina, souls, death_function=None,
 				 type=None,  modifier=None):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
@@ -226,7 +226,7 @@ class Fighter:
 		self.base_power = power
 		self.base_max_stamina = stamina # player stamina
 		self.stamina = stamina
-		self.exp = exp # amount of experience given to player
+		self.souls = souls # amount of souls given to player
 		self.death_function = death_function		
 		self.type = type # What kind of enemy this object is
 		if modifier is not None: # Apply any name base stat modifiers
@@ -267,7 +267,7 @@ class Fighter:
 				if d_function is not None:
 					d_function(cls.owner)
 					if cls.owner != player: # yield player exp
-						player.fighter.exp += cls.exp
+						player.fighter.souls += cls.souls
 
 	def attack(cls, target):
 		# simple formula to calculate damage and stamina consumption
@@ -308,7 +308,7 @@ class Fighter:
 		cls.hp = cls.base_max_hp
 		cls.base_power = cls.base_power + int(round(cls.base_power * modifier))
 		cls.base_defense = cls.base_defense + int(round(cls.base_defense * modifier))
-		cls.exp = cls.exp + int(round(cls.exp * modifier))
+		cls.souls = cls.souls + int(round(cls.souls * modifier))
 
 	def calculate_stamina_use(cls):
 		# Calculate equipment stamina usage
@@ -563,7 +563,7 @@ def place_objects(room):
 			if choice == 'orc':
 				# create orc				
 				fighter_component = Fighter(hp=20, defense=0, power=4,
-											stamina=1, exp=35,
+											stamina=1, souls=35,
 											death_function=monster_death,
 											type=constants.ORC, modifier=mod)
 				ai_component = BasicMonster()
@@ -573,7 +573,7 @@ def place_objects(room):
 			elif choice == 'troll':
 				# create troll
 				fighter_component = Fighter(hp=30, defense=2, power=8,
-											stamina=1, exp=100,
+											stamina=1, souls=100,
 											death_function=monster_death,
 											type=constants.TROLL, modifier=mod)
 				ai_component = BasicMonster()
@@ -782,8 +782,8 @@ def player_death(player):
 def monster_death(monster):
 	# Turn monster into corpse and remove their functionality.
 	# can't block, attack, move, or be attacked.
-	message(monster.name.capitalize() + ' is dead! You gain ' 
-			+ str(monster.fighter.exp) + ' experience points.', libtcod.yellow)
+	message(monster.name.capitalize() + ' is dead! You absorb '
+			+ str(monster.fighter.souls) + ' souls.', libtcod.yellow)
 	monster.char = '%'
 	monster.color = libtcod.dark_red
 	monster.blocks = False	
@@ -941,10 +941,10 @@ def check_level_up():
 					   + 105.6 * player.level
 					   - 895)
 
-	if player.fighter.exp >= level_up_souls:
+	if player.fighter.souls >= level_up_souls:
 		# level up y'all!
 		player.level += 1
-		player.fighter.exp -= level_up_souls
+		player.fighter.souls -= level_up_souls
 		message('Your battle skills grow stronger! You reached level ' 
 				+ str(player.level) + '!', libtcod.yellow)
 		# increase hp, def, or power
@@ -953,7 +953,7 @@ def check_level_up():
 			choice = menu('Choose which stat to raise:\n',
 						  ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + '->' + str(player.fighter.max_hp + 20) + ')',
 						  'Strength (+1 Attack, from ' + str(player.fighter.power) + '->' + str(player.fighter.power + 1) + ')',
-						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'], 
+						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'],
 						  constants.LEVEL_SCREEN_WIDTH)
 			if choice == 0:
 				player.fighter.base_max_hp += 20
@@ -1021,11 +1021,11 @@ def handle_keys():
 				if stairs.x == player.x and stairs.y == player.y:
 					next_level()
 			if key_chr == 's': # check character information
-				level_up_exp = (constants.LEVEL_UP_BASE 
-								+ player.level * constants.LEVEL_UP_FACTOR)
-				msgbox('Stats\n\nLevel ' + str(player.level) + '\nExperience: '
-					   + str(player.fighter.exp) + '\nExperience to level up: '
-					   + str(level_up_exp) + '\n\nMaximum HP: ' 
+				level_up_souls = (constants.LEVEL_UP_BASE
+								 + constants.LEVEL_UP_FACTOR)
+				msgbox('Stats\n\nLevel ' + str(player.level) + '\nSouls: '
+					   + str(player.fighter.souls) + '\nSouls to level up: '
+					   + str(level_up_souls) + '\n\nMaximum HP: '
 					   + str(player.fighter.max_hp) + '\nAttack: ' 
 					   + str(player.fighter.power) + '\nDefense: ' 
 					   + str(player.fighter.defense),
@@ -1139,6 +1139,8 @@ def render_all():
 	render_bar(1, 2, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
 			   player.fighter.max_stamina, libtcod.dark_green,
 			   libtcod.darkest_green)
+	libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT,
+							'Souls:  ' + str(player.fighter.souls))
 			   
 	# display current dungeon level to player
 	libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT,
@@ -1325,7 +1327,7 @@ def new_game():
 	global estus_flask, estus_flask_max
 	
 	# initialize player object
-	fighter_component = Fighter(hp=100, defense=1, power=2, stamina=30, exp=0,
+	fighter_component = Fighter(hp=100, defense=1, power=2, stamina=30, souls=0,
 								death_function=player_death)
 	player = Object(0, 0, 'David', '@', libtcod.white, 
 					blocks=True, fighter=fighter_component)
@@ -1446,7 +1448,7 @@ def play_game():
 		# Flush our changes to the console.
 		libtcod.console_flush()
 
-		# Check if player has enough exp to level up
+		# Check if player has enough souls to level up
 		check_level_up()
 
 		# Clear objects in list.
