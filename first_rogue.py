@@ -964,6 +964,8 @@ def check_level_up():
 			elif choice == 2:
 				player.fighter.base_defense += 1
 				player.fighter.hp = player.fighter.max_hp
+	else:
+		message("More souls required...", libtcod.red)
 
 def handle_keys():
 	# Handle key presses inputted by player.
@@ -1279,12 +1281,13 @@ def bonfire_menu():
 	restore_player()
 	
 	# Build the options for this menu
-	choice = menu('', ['Level up', 'Cancel'], constants.BONFIRE_WIDTH)
+	choice = menu('', [' Level up', ' Cancel'], constants.BONFIRE_WIDTH)
 	
 	if choice == 0: # level up
-		message('Level up', libtcod.white)
+		# Check if player has enough souls to level up
+		check_level_up()
 	elif choice == 1: # cancel
-		message('Cancelled', libtcod.white)
+		return
 
 def main_menu():
 	# main menu of game
@@ -1299,7 +1302,7 @@ def main_menu():
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
 								 constants.SCREEN_HEIGHT/2-4,
 								 libtcod.BKGND_NONE, libtcod.CENTER, 
-								 'TOMBS OF THE ANCIENT KINGS')
+								 'Rogue Souls')
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
 								 constants.SCREEN_HEIGHT-2,
 								 libtcod.BKGND_NONE, libtcod.CENTER, 
@@ -1447,9 +1450,6 @@ def play_game():
 		
 		# Flush our changes to the console.
 		libtcod.console_flush()
-
-		# Check if player has enough souls to level up
-		check_level_up()
 
 		# Clear objects in list.
 		for object in objects:
