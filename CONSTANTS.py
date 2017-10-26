@@ -4,31 +4,32 @@ import libtcodpy as libtcod
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 60
 
-# Game message positioning and size
-MSG_X = 0
-MSG_Y = 0
-MSG_PANEL_WIDTH = SCREEN_WIDTH
-MSG_PANEL_HEIGHT = 8
-
-# Stats positioning and size
+# GUI bar size
 BAR_WIDTH = 20
-STATS_PANEL_WIDTH = BAR_WIDTH + 2
-STATS_PANEL_HEIGHT = (SCREEN_HEIGHT - MSG_PANEL_HEIGHT) / 2
-STATS_X = 0
-STATS_Y = MSG_PANEL_HEIGHT
 
-# size and positioning of dungeon
+# Game message panel positioning and size
+MSG_X = BAR_WIDTH + 2
+MSG_Y = 0
+MSG_PANEL_WIDTH = SCREEN_WIDTH - MSG_X
+MSG_PANEL_HEIGHT = 7
+
+# Stats panel positioning and size
+STATS_PANEL_WIDTH = MSG_X
+STATS_PANEL_HEIGHT = SCREEN_HEIGHT / 2
+STATS_X = 0
+STATS_Y = 0
+
+# size and positioning of map panel
 MAP_WIDTH = SCREEN_WIDTH - STATS_PANEL_WIDTH
 MAP_HEIGHT = SCREEN_HEIGHT - MSG_PANEL_HEIGHT
-MAP_X = BAR_WIDTH + 1
+MAP_X = MSG_X
 MAP_Y = MSG_PANEL_HEIGHT
-# MAP_Y = 0
 
-# Hotkey positioning and size
+# Hotkey panel positioning and size
 HOTKEY_PANEL_WIDTH = BAR_WIDTH + 2
-HOTKEY_PANEL_HEIGHT = (SCREEN_HEIGHT - MSG_PANEL_HEIGHT) / 2
+HOTKEY_PANEL_HEIGHT = SCREEN_HEIGHT / 2
 HOTKEY_X = 0
-HOTKEY_Y = STATS_Y + STATS_PANEL_HEIGHT
+HOTKEY_Y = STATS_PANEL_HEIGHT
 
 # When to end the game
 END_LEVEL = 10

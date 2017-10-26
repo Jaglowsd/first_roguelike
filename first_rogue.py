@@ -841,6 +841,9 @@ def target_tile(max_range=None):
 		render_all()
 		
 		(x, y) = (mouse.cx, mouse.cy)
+		# offset mouse positioning to account for not drawing the map at (0,0)
+		x -= constants.MAP_X
+		y -= constants.MAP_Y
 		
 		# check for a left-click and within player fov, and 
 		# that the max range isn't set or less than given max range
@@ -884,11 +887,14 @@ def get_names_under_mouse():
 	
 	# return a string with name of object under the mouse.
 	(x, y) = (mouse.cx, mouse.cy)
+	# offset mouse positioning to account for not drawing the map at (0,0)
+	x -= constants.MAP_X
+	y -= constants.MAP_Y
 	# create list with names of all objects at mouse coordinates and player FOV.
 	names = [obj.name for obj in objects
 		 if obj.x == x and obj.y == y 
 					   and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
-	names = ', '.join(names) # join names separated by commas
+	names = '\n'.join(names) # join names separated by a line break
 	return names.capitalize()
 
 def player_move_or_attack(dx, dy):
@@ -1076,7 +1082,7 @@ def render_all():
 			wall = map[x][y].block_sight
 			if not visible:
 				# player can only see if not explored.
-				if map[x][y].explored:
+				# if map[x][y].explored:
 				# out of player's fov
 					if wall:
 						libtcod.console_put_char_ex(con, x, y, '#',
@@ -1128,14 +1134,14 @@ def render_all():
 	## MSG Panel ##
 	###############
 	# prepare to render msg panel.
-	libtcod.console_set_default_background(msg_panel, libtcod.darkest_grey)
+	libtcod.console_set_default_background(msg_panel, libtcod.darkest_crimson)
 	libtcod.console_clear(msg_panel)
 	
 	# print game feed, one message at a time.	
 	y = 1
 	for (line, color) in game_msgs:
 		libtcod.console_set_default_foreground(msg_panel, color)
-		libtcod.console_print_ex(msg_panel, constants.MSG_X+1, y,
+		libtcod.console_print_ex(msg_panel, 1, y,
 								 libtcod.BKGND_NONE, libtcod.LEFT, line)
 		y += 1	
 
@@ -1148,28 +1154,25 @@ def render_all():
 	## Stats Panel ##
 	#################
 	# prepare to render msg panel.
-	libtcod.console_set_default_background(stats_panel, libtcod.darkest_grey)
+	libtcod.console_set_default_background(stats_panel, libtcod.darkest_green)
 	libtcod.console_clear(stats_panel)
 
 	# show player stats
 	render_bar(1, 1, constants.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
-	render_bar(1, 3, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
+	render_bar(1, 2, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
 			   player.fighter.max_stamina, libtcod.dark_green,
 			   libtcod.darkest_green)
-	libtcod.console_print_ex(stats_panel, 1, constants.STATS_PANEL_HEIGHT - 1,
-							libtcod.BKGND_NONE, libtcod.LEFT,
-							'Souls  ' + str(player.fighter.souls))
-
-	# display current dungeon level to player
-	libtcod.console_print_ex(stats_panel, 1, 7, libtcod.BKGND_NONE, libtcod.LEFT,
-							'Dungeon Level ' + str(dungeon_level))
+	libtcod.console_print_ex(stats_panel, constants.STATS_PANEL_WIDTH/2, 4,
+							libtcod.BKGND_NONE, libtcod.CENTER,
+							'Souls ' + str(player.fighter.souls))
 
 	# Player controls
 	if dungeon_level == 1:
 		text = 'Press / for controls'
-		libtcod.console_print_ex(stats_panel, 1, 9, libtcod.BKGND_NONE, libtcod.LEFT,
-							text)
+		libtcod.console_print_ex(stats_panel, 1,
+								 constants.STATS_PANEL_HEIGHT - 1,
+								libtcod.BKGND_NONE, libtcod.LEFT, text)
 
 	# blit contents of 'stats panel' to root console
 	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
@@ -1187,6 +1190,12 @@ def render_all():
 	libtcod.console_set_default_foreground(hotkey_panel, libtcod.white)
 	libtcod.console_print_ex(hotkey_panel, 1, 1, libtcod.BKGND_NONE,
 							 libtcod.LEFT, get_names_under_mouse())
+
+	# display current dungeon level to player
+	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
+							 constants.HOTKEY_PANEL_HEIGHT - 2,
+							 libtcod.BKGND_NONE, libtcod.CENTER,
+							'Dungeon Level ' + str(dungeon_level))
 
 	# blit contents of 'hotkey panel' to root console
 	libtcod.console_blit(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
@@ -1222,7 +1231,7 @@ def message(new_msg, color=libtcod.white):
 
 	for line in new_msg_lines:
 		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == constants.MSG_PANEL_HEIGHT:
+		if len(game_msgs) == constants.MSG_PANEL_HEIGHT-1:
 			del game_msgs[0]
 
 		# add the new line as a tuple, with text and color.
@@ -1399,6 +1408,7 @@ def new_game():
 					libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
 	equip_component.equip()
+
 	dagger.always_visible = True
 
 def load_game():
