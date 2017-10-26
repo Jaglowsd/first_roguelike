@@ -542,7 +542,7 @@ def place_objects(room):
 	num_items = libtcod.random_get_int(0, 0, max_items)
 	# dictionary of items and there chances of spawn
 	item_chances = {}
-	item_chances['heal'] = 25 # heal spawn is floor independent
+	item_chances['lifegem'] = 25 # heal spawn is floor independent
 	item_chances['confuse'] = from_dungeon_level([[10, 2, constants.END_LEVEL]])
 	item_chances['lighting'] = from_dungeon_level([[25, 4, constants.END_LEVEL]])
 	item_chances['fire'] = from_dungeon_level([[25, 6, constants.END_LEVEL]])
@@ -557,10 +557,10 @@ def place_objects(room):
 		if not is_blocked(x, y):
 			# create a chance for item to spawn
 			choice = random_choice(item_chances)
-			if choice == 'heal':
-				# healing potion (70% chance)
+			if choice == 'lifegem':
+				# lifegem (70% chance)
 				item_component = Item(use_function=cast_heal)
-				item = Object(x, y, 'healing potion', '!', libtcod.white,
+				item = Object(x, y, 'lifegem', '!', libtcod.white,
 							  item=item_component, always_visible=True)
 			elif choice == 'lighting':
 				# create a lighting spell (10% chance)
