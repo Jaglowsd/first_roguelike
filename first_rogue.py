@@ -1082,7 +1082,7 @@ def render_all():
 			wall = map[x][y].block_sight
 			if not visible:
 				# player can only see if not explored.
-				# if map[x][y].explored:
+				if map[x][y].explored:
 				# out of player's fov
 					if wall:
 						libtcod.console_put_char_ex(con, x, y, '#',
@@ -1202,6 +1202,29 @@ def render_all():
 						 constants.HOTKEY_PANEL_HEIGHT,
 						 0, constants.HOTKEY_X, constants.HOTKEY_Y)
 
+	##################
+	## Action Panel ##
+	##################
+	# prepare to render action panel.
+	libtcod.console_set_default_background(action_panel, libtcod.black)
+	libtcod.console_clear(action_panel)
+
+	width = 0
+	# Inventory
+	width += render_action(1, 0, 'I', 'nventory',
+						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	# Pick up/loot
+	width += render_action(width + 2, 0, 'Loot', '(G)', libtcod.white, libtcod.yellow, libtcod.darker_grey)
+	# Drop
+	width += render_action(width + 3, 0, 'D', 'rop', libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	# Pass
+	width += render_action(width + 4, 0, 'P', 'ass', libtcod.yellow, libtcod.white, libtcod.darker_grey)
+
+	# blit contents of 'action panel' to root console
+	libtcod.console_blit(action_panel, 0, 0, constants.ACTIONS_PANEL_WIDTH,
+						 constants.ACTIONS_PANEL_HEIGHT,
+						 0, constants.ACTIONS_X, constants.ACTIONS_Y)
+
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 	# render bar (HP, exp, etc...) Calculate width of bar.
 	bar_width = int(float(value) / maximum * total_width)
@@ -1222,6 +1245,30 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 	libtcod.console_print_ex(stats_panel, x + total_width / 2, y, libtcod.BKGND_NONE,
 							 libtcod.CENTER,
 							 name + ': ' + str(value) + '/' + str(maximum))
+
+def render_action(x, y, begin, rest, first_color, rest_color, back_color):
+	# render rectangle and action text
+	# Can customize beginning and end text
+
+	# calculate rectangle width
+	rec_width = len(begin) + len(rest) + 2
+
+	libtcod.console_set_default_background(action_panel, back_color)
+	libtcod.console_rect(action_panel, x, y, rec_width,
+						 constants.ACTIONS_PANEL_HEIGHT, False,
+						 libtcod.BKGND_SCREEN)
+
+	# Draw begin
+	libtcod.console_set_default_foreground(action_panel, first_color)
+	libtcod.console_print_ex(action_panel, x + 1, y+1,
+							 libtcod.BKGND_NONE, libtcod.LEFT,
+							begin)
+	# Draw rest
+	libtcod.console_set_default_foreground(action_panel, rest_color)
+	libtcod.console_print_ex(action_panel, x + 1 + len(begin), y+1,
+							 libtcod.BKGND_NONE, libtcod.LEFT,
+							rest)
+	return rec_width
 
 def message(new_msg, color=libtcod.white):
 	# Append messages to game feed while removing old ones if buffer is full.
@@ -1536,6 +1583,8 @@ msg_panel = libtcod.console_new(constants.MSG_PANEL_WIDTH, constants.MSG_PANEL_H
 stats_panel = libtcod.console_new(constants.STATS_PANEL_WIDTH, constants.STATS_PANEL_HEIGHT)
 # Hotkey panel
 hotkey_panel = libtcod.console_new(constants.HOTKEY_PANEL_WIDTH, constants.HOTKEY_PANEL_HEIGHT)
+# Action panel
+action_panel = libtcod.console_new(constants.ACTIONS_PANEL_WIDTH, constants.ACTIONS_PANEL_HEIGHT)
 
 # start this bad boy
 main_menu()
