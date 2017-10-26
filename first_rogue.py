@@ -928,13 +928,23 @@ def get_all_equiped(obj):
 		return [] # other objects by default do not have equipment
 
 def check_level_up():
-	# check if player has enough exp to level up
-	level_up_exp = (constants.LEVEL_UP_BASE 
-				   + (player.level * constants.LEVEL_UP_FACTOR))
-	if player.fighter.exp >= level_up_exp:
+	# check if player has enough souls to level up
+
+	# before lvl 12 there is no accurate formula to calcualte the amount
+	# of souls needed to level up. The formula for 12 and up is found at
+	# http://darksouls.wikidot.com/soul-level
+	if player.level < 12:
+		level_up_souls = (constants.LEVEL_UP_BASE +  constants.LEVEL_UP_FACTOR)
+	else:
+		level_up_souls = (0.02 * (player.level ** 3)
+					   + 3.06 * (player.level ** 2)
+					   + 105.6 * player.level
+					   - 895)
+
+	if player.fighter.exp >= level_up_souls:
 		# level up y'all!
 		player.level += 1
-		player.fighter.exp -= level_up_exp
+		player.fighter.exp -= level_up_souls
 		message('Your battle skills grow stronger! You reached level ' 
 				+ str(player.level) + '!', libtcod.yellow)
 		# increase hp, def, or power
@@ -944,7 +954,7 @@ def check_level_up():
 						  ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + '->' + str(player.fighter.max_hp + 20) + ')',
 						  'Strength (+1 Attack, from ' + str(player.fighter.power) + '->' + str(player.fighter.power + 1) + ')',
 						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'], 
-						  constants.LEVEL_SCREEN_WIDTH, 'Level up!')
+						  constants.LEVEL_SCREEN_WIDTH)
 			if choice == 0:
 				player.fighter.base_max_hp += 20
 				player.fighter.hp = player.fighter.max_hp
