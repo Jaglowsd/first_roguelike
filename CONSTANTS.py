@@ -54,8 +54,8 @@ FIREBALL_DAMAGE = 25
 FIREBALL_RADIUS = 3
 
 # Experience and level-ups
-LEVEL_UP_BASE = 200
-LEVEL_UP_FACTOR = 150
+LEVEL_UP_BASE = 656
+LEVEL_UP_FACTOR = 17
 
 # Field of View Constants
 FOV_ALGO = 0 # BASIC algorithm
