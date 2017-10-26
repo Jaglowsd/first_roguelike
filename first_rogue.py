@@ -804,11 +804,11 @@ def loot_drop(monster):
 	choice = random_choice(loot_chances)
 
 	item = None
-	if type == CONSTANTS.ORC:
-		if choice == CONSTANTS.ORA:
+	if type == constants.ORC:
+		if choice == constants.ORA:
 			equip_component = Equipment(slot='main hand',
 										power_bonus=3, stamina_usage=3)
-			item = Object(monster.x, monster.y, CONSTANTS.ORA, 'R',
+			item = Object(monster.x, monster.y, constants.ORA, 'R',
 						  libtcod.light_green, equipment=equip_component)
 		elif choice == constants.RATIONS:
 			item_component = Item(use_function=cast_heal)
@@ -816,11 +816,11 @@ def loot_drop(monster):
 						  item=item_component, always_visible=True)
 		elif choice == constants.GOLD:
 			message('5 gold was dropped by the orc', libtcod.gold)
-	elif type == CONSTANTS.TROLL:
-		if choice == CONSTANTS.CLUB:
+	elif type == constants.TROLL:
+		if choice == constants.CLUB:
 			equip_component = Equipment(slot='main hand', power_bonus=5,
 										stamina_usage=5)
-			item = Object(monster.x, monster.y, CONSTANTS.CLUB, 'P',
+			item = Object(monster.x, monster.y, constants.CLUB, 'P',
 						  libtcod.brown, equipment=equip_component)
 		elif choice == constants.GOLD:
 			message('8 gold was dropped by the troll', libtcod.gold)
@@ -1024,7 +1024,7 @@ def handle_keys():
 				text = ('Controls - Any key to cancel\n\nInventory: i'
 						'\nDrop item: d\nPick up/loot: g\nCharacter stats: c\n'
 						'Wait: p\nMovement: arrow keys\n')
-				menu(text, [], CONSTANTS.CHARACTER_SCREEN_WIDTH)
+				menu(text, [], constants.CHARACTER_SCREEN_WIDTH)
 
 			return 'didn\'t-take-turn'
 
@@ -1126,7 +1126,7 @@ def render_all():
 	# show player stats
 	render_bar(1, 1, constants.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
-	render_bar(1, 2, CONSTANTS.BAR_WIDTH, 'Stamina', player.fighter.stamina,
+	render_bar(1, 2, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
 			   player.fighter.max_stamina, libtcod.dark_green,
 			   libtcod.darkest_green)
 			   
