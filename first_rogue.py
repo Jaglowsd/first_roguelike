@@ -1211,14 +1211,17 @@ def render_all():
 
 	width = 0
 	# Inventory
-	width += render_action(1, 0, 'I', 'nventory',
+	width += render_action(2, 0, ' I', 'nventory ',
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 	# Pick up/loot
-	width += render_action(width + 2, 0, 'Loot', '(G)', libtcod.white, libtcod.yellow, libtcod.darker_grey)
+	width += render_action(width + 3, 0, ' Loot', '(G) ',
+						   libtcod.white, libtcod.yellow, libtcod.darker_grey)
 	# Drop
-	width += render_action(width + 3, 0, 'D', 'rop', libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	width += render_action(width + 4, 0, ' D', 'rop ',
+						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 	# Pass
-	width += render_action(width + 4, 0, 'P', 'ass', libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	width += render_action(width + 5, 0, ' P', 'ass ',
+						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 
 	# blit contents of 'action panel' to root console
 	libtcod.console_blit(action_panel, 0, 0, constants.ACTIONS_PANEL_WIDTH,
@@ -1248,27 +1251,35 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 def render_action(x, y, begin, rest, first_color, rest_color, back_color):
 	# render rectangle and action text
-	# Can customize beginning and end text
+	# Can customize beginning and end string
 
-	# calculate rectangle width
-	rec_width = len(begin) + len(rest) + 2
+	# calculate for and back rectangle width, length of provided string
+	rec_width_fore = len(begin) + len(rest)
+	rec_width_back = rec_width_fore + 2
 
+	# Draw background rectangle
+	libtcod.console_set_default_background(action_panel, libtcod.Color(75,75,75))
+	libtcod.console_rect(action_panel, x-1, y, rec_width_back,
+						 constants.ACTIONS_PANEL_HEIGHT, False,
+						 libtcod.BKGND_SCREEN)
+
+	# Draw foreground rectangle
 	libtcod.console_set_default_background(action_panel, back_color)
-	libtcod.console_rect(action_panel, x, y, rec_width,
+	libtcod.console_rect(action_panel, x, y, rec_width_fore,
 						 constants.ACTIONS_PANEL_HEIGHT, False,
 						 libtcod.BKGND_SCREEN)
 
 	# Draw begin
 	libtcod.console_set_default_foreground(action_panel, first_color)
-	libtcod.console_print_ex(action_panel, x + 1, y+1,
+	libtcod.console_print_ex(action_panel, x, y+1,
 							 libtcod.BKGND_NONE, libtcod.LEFT,
 							begin)
 	# Draw rest
 	libtcod.console_set_default_foreground(action_panel, rest_color)
-	libtcod.console_print_ex(action_panel, x + 1 + len(begin), y+1,
+	libtcod.console_print_ex(action_panel, x + len(begin), y+1,
 							 libtcod.BKGND_NONE, libtcod.LEFT,
 							rest)
-	return rec_width
+	return rec_width_back
 
 def message(new_msg, color=libtcod.white):
 	# Append messages to game feed while removing old ones if buffer is full.
