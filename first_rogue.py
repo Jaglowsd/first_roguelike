@@ -726,7 +726,8 @@ def cast_heal(cls):
 
 	if cls.owner == estus_flask:
 		player.fighter.heal(constants.ESTUS_FLASK_HEAL)
-		message('You take a lifesaving sip...', libtcod.light_orange)
+		message('You take a lifesaving sip from your estus flask...',
+				libtcod.light_orange)
 	else:
 		player.fighter.heal(constants.HEAL_AMOUNT)
 		message('Your wounds feel slightly better.', libtcod.light_azure)
