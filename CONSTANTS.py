@@ -20,17 +20,21 @@ STATS_X = 0
 STATS_Y = 0
 
 # size and positioning of map panel
-# Subtract three for the action panel at the bottom
-MAP_WIDTH = SCREEN_WIDTH - STATS_PANEL_WIDTH
-MAP_HEIGHT = SCREEN_HEIGHT - MSG_PANEL_HEIGHT - 3
+MAP_WIDTH = 100
+MAP_HEIGHT = 100
 MAP_X = MSG_X
 MAP_Y = MSG_PANEL_HEIGHT
 
+# portion of map shown
+# Subtract three for the action panel at the bottom
+CAMERA_WIDTH = SCREEN_WIDTH - STATS_PANEL_WIDTH
+CAMERA_HEIGHT = SCREEN_HEIGHT - MSG_PANEL_HEIGHT - 3
+
 # Action panel position and size
-ACTIONS_PANEL_WIDTH = MAP_WIDTH
+ACTIONS_PANEL_WIDTH = CAMERA_WIDTH
 ACTIONS_PANEL_HEIGHT = 3
 ACTIONS_X = MAP_X
-ACTIONS_Y = MSG_PANEL_HEIGHT + MAP_HEIGHT
+ACTIONS_Y = MSG_PANEL_HEIGHT + CAMERA_HEIGHT
 
 # Hotkey panel positioning and size
 HOTKEY_PANEL_WIDTH = BAR_WIDTH + 2
@@ -42,8 +46,8 @@ HOTKEY_Y = STATS_PANEL_HEIGHT
 END_LEVEL = 10
 
 # Max and min room size
-ROOM_MAX_SIZE = 10
-ROOM_MIN_SIZE = 6
+ROOM_MAX_SIZE = 15
+ROOM_MIN_SIZE = 8
 
 # Max number of rooms
 MAX_ROOMS = 30
