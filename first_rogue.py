@@ -1404,7 +1404,7 @@ def main_menu():
 		# title of game and author
 		libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
-								 constants.SCREEN_HEIGHT/2-4,
+								 constants.SCREEN_HEIGHT/2-8,
 								 libtcod.BKGND_NONE, libtcod.CENTER, 
 								 'Rogue Souls')
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
@@ -1480,7 +1480,7 @@ def load_game():
 	# load shelved game
 	global map, objects, inventory, player, game_msgs, game_state
 	global stairs, dungeon_level, estus_flask, estus_flask_max
-	
+
 	file = shelve.open('savegame.sav', 'r')
 	map = file['map']
 	objects = file['objects']
@@ -1517,12 +1517,33 @@ def save_game():
 	clear_consoles()
 
 def clear_consoles():
-	# clear contents of all consoles
+	# clear contents of all consoles upon exiting game
 
-	libtcod.console_clear(msg_panel)
-	libtcod.console_clear(hotkey_panel)
-	libtcod.console_clear(stats_panel)
+	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_clear(con)
+	libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
+						 constants.MAP_HEIGHT, 0,
+						 constants.MAP_X, constants.MAP_Y)
+	libtcod.console_set_default_background(msg_panel, libtcod.black)
+	libtcod.console_clear(msg_panel)
+	libtcod.console_blit(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
+						 constants.MSG_PANEL_HEIGHT,
+						 0, constants.MSG_X, constants.MSG_Y)
+	libtcod.console_set_default_background(stats_panel, libtcod.black)
+	libtcod.console_clear(stats_panel)
+	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
+						 constants.STATS_PANEL_HEIGHT,
+						 0, constants.STATS_X, constants.STATS_Y)
+	libtcod.console_set_default_background(hotkey_panel, libtcod.black)
+	libtcod.console_clear(hotkey_panel)
+	libtcod.console_blit(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
+						 constants.HOTKEY_PANEL_HEIGHT,
+						 0, constants.HOTKEY_X, constants.HOTKEY_Y)
+	libtcod.console_set_default_background(action_panel, libtcod.black)
+	libtcod.console_clear(action_panel)
+	libtcod.console_blit(action_panel, 0, 0, constants.ACTIONS_PANEL_WIDTH,
+						 constants.ACTIONS_PANEL_HEIGHT,
+						 0, constants.ACTIONS_X, constants.ACTIONS_Y)
 
 	libtcod.console_flush()
 
