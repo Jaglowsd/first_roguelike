@@ -11,7 +11,7 @@ BAR_WIDTH = 20
 MSG_X = BAR_WIDTH + 2
 MSG_Y = 0
 MSG_PANEL_WIDTH = SCREEN_WIDTH - MSG_X
-MSG_PANEL_HEIGHT = 7
+MSG_PANEL_HEIGHT = 8
 
 # Stats panel positioning and size
 STATS_PANEL_WIDTH = MSG_X
@@ -20,6 +20,7 @@ STATS_X = 0
 STATS_Y = 0
 
 # size and positioning of map panel
+# Subtract three for the action panel at the bottom
 MAP_WIDTH = SCREEN_WIDTH - STATS_PANEL_WIDTH
 MAP_HEIGHT = SCREEN_HEIGHT - MSG_PANEL_HEIGHT - 3
 MAP_X = MSG_X
