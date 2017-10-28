@@ -1338,8 +1338,8 @@ def menu(header, options, width):
 		letter_index += 1
 
 	# blit the contents of 'window' to the root console
-	x = constants.SCREEN_WIDTH/2 - width/2
-	y = constants.SCREEN_HEIGHT/2 - height/2
+	x = constants.MAP_WIDTH/2
+	y = constants.MAP_HEIGHT/2
 	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 
 	# present the root console to the player and wait for a key press
