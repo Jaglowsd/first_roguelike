@@ -1134,8 +1134,13 @@ def render_all():
 	## MSG Panel ##
 	###############
 	# prepare to render msg panel.
-	libtcod.console_set_default_background(msg_panel, libtcod.darkest_crimson)
+	libtcod.console_set_default_background(msg_panel, libtcod.black)
 	libtcod.console_clear(msg_panel)
+
+	libtcod.console_set_default_foreground(msg_panel, libtcod.white)
+	libtcod.console_print_frame(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
+                                constants.MSG_PANEL_HEIGHT, False,
+								libtcod.BKGND_NONE, None)
 	
 	# print game feed, one message at a time.	
 	y = 1
@@ -1154,25 +1159,21 @@ def render_all():
 	## Stats Panel ##
 	#################
 	# prepare to render msg panel.
-	libtcod.console_set_default_background(stats_panel, libtcod.darkest_green)
+	libtcod.console_set_default_background(stats_panel, libtcod.black)
 	libtcod.console_clear(stats_panel)
+	libtcod.console_print_frame(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
+                                constants.STATS_PANEL_HEIGHT, False,
+								libtcod.BKGND_NONE, None)
 
 	# show player stats
-	render_bar(1, 1, constants.BAR_WIDTH, 'HP', player.fighter.hp,
+	render_bar(1, 2, constants.BAR_WIDTH, 'HP', player.fighter.hp,
 			   player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
-	render_bar(1, 2, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
+	render_bar(1, 3, constants.BAR_WIDTH, 'Stamina', player.fighter.stamina,
 			   player.fighter.max_stamina, libtcod.dark_green,
 			   libtcod.darkest_green)
-	libtcod.console_print_ex(stats_panel, constants.STATS_PANEL_WIDTH/2, 4,
+	libtcod.console_print_ex(stats_panel, constants.STATS_PANEL_WIDTH/2, 5,
 							libtcod.BKGND_NONE, libtcod.CENTER,
 							'Souls ' + str(player.fighter.souls))
-
-	# Player controls
-	if dungeon_level == 1:
-		text = 'Press / for controls'
-		libtcod.console_print_ex(stats_panel, 1,
-								 constants.STATS_PANEL_HEIGHT - 1,
-								libtcod.BKGND_NONE, libtcod.LEFT, text)
 
 	# blit contents of 'stats panel' to root console
 	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
@@ -1185,6 +1186,9 @@ def render_all():
 	# prepare to render msg panel.
 	libtcod.console_set_default_background(hotkey_panel, libtcod.darkest_grey)
 	libtcod.console_clear(hotkey_panel)
+	libtcod.console_print_frame(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
+                                constants.HOTKEY_PANEL_HEIGHT, False,
+								libtcod.BKGND_NONE, None)
 
 	# display names of objects under the mouse.
 	libtcod.console_set_default_foreground(hotkey_panel, libtcod.white)
@@ -1221,6 +1225,9 @@ def render_all():
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 	# Pass
 	width += render_action(width + 5, 0, ' P', 'ass ',
+						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	# Player stats
+	width += render_action(width + 6, 0, ' S', 'tats ',
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 
 	# blit contents of 'action panel' to root console
@@ -1289,7 +1296,7 @@ def message(new_msg, color=libtcod.white):
 
 	for line in new_msg_lines:
 		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == constants.MSG_PANEL_HEIGHT-1:
+		if len(game_msgs) == constants.MSG_PANEL_HEIGHT-2:
 			del game_msgs[0]
 
 		# add the new line as a tuple, with text and color.
