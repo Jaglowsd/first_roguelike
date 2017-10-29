@@ -132,6 +132,8 @@ class Item:
 			else:
 				if cls.use_function(cls) != 'cancelled':
 					inventory.remove(cls.owner) # use item if it wasn't cancelled
+					if cls.owner in hotkeys:
+						hotkeys.remove(cls.owner) # Remove form hotkey if used
 		
 	def pick_up(cls):
 		# add item to player's inventory and remove it from the map.
@@ -166,6 +168,10 @@ class Item:
 			equipment = cls.owner.equipment
 			if equipment and equipment.is_equiped:
 				equipment.dequip()
+
+			# Remove from hotkeys if was bound
+			if cls.owner in hotkeys:
+					hotkeys.remove(cls.owner)
 		else:
 			message('Don\'t be a fool...', libtcod.red)
 
@@ -615,12 +621,12 @@ def place_objects(room):
 			if choice == 'lifegem':
 				# lifegem (70% chance)
 				item_component = Item(use_function=cast_heal)
-				item = Object(x, y, 'lifegem', '!', libtcod.white,
+				item = Object(x, y, 'lifegem', '!', libtcod.light_yellow,
 							  item=item_component, always_visible=True)
 			elif choice == 'lighting':
 				# create a lighting spell (10% chance)
 				item_component = Item(use_function=cast_lighting)
-				item = Object(x, y, 'Lighting spell', 'Z', libtcod.light_yellow,
+				item = Object(x, y, 'Lighting spell', 'Z', libtcod.yellow,
 							  item=item_component, always_visible=True)
 			elif choice == 'fire':
 				# create a fireball spell (10% chance)
@@ -818,8 +824,9 @@ def loot_drop(monster):
 						  libtcod.light_green, equipment=equip_component)
 		elif choice == constants.RATIONS:
 			item_component = Item(use_function=cast_heal)
-			item = Object(monster.x, monster.y, constants.RATIONS, 'x', libtcod.white,
-						  item=item_component, always_visible=True)
+			item = Object(monster.x, monster.y, constants.RATIONS, 'x',
+						  libtcod.dark_sepia, item=item_component,
+						  always_visible=True)
 		elif choice == constants.GOLD:
 			message('5 gold was dropped by the orc', libtcod.gold)
 	elif type == constants.TROLL:
