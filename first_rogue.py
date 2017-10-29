@@ -1007,6 +1007,19 @@ def handle_keys():
 			player_move_or_attack(-1, 0)
 		elif key.vk == libtcod.KEY_RIGHT:
 			player_move_or_attack(1, 0)
+		# bound hotkeys
+		elif key.vk == libtcod.KEY_1:
+			if len(hotkeys) >= 1:
+				hotkeys[0].item.use()
+		elif key.vk == libtcod.KEY_2:
+			if len(hotkeys) >= 2:
+				hotkeys[1].item.use()
+		elif key.vk == libtcod.KEY_3:
+			if len(hotkeys) >= 3:
+				hotkeys[2].item.use()
+		elif key.vk == libtcod.KEY_4:
+			if len(hotkeys) >= 4:
+				hotkeys[3].item.use()
 		elif chr(key.c) == 'p':
 			# regenerate 1 stamina while waiting
 			if player.fighter.stamina != player.fighter.max_stamina:
@@ -1053,8 +1066,29 @@ def handle_keys():
 						'\nDrop item: d\nPick up/loot: g\nCharacter stats: c\n'
 						'Wait: p\nMovement: arrow keys\n')
 				menu(text, [], constants.CHARACTER_SCREEN_WIDTH)
+			if key_chr == 'b': # Binding menu
+				choice = inventory_menu('Press the key next '
+								'to the item to bind to your hotkeys.\n')
+				if choice is not None:
+					bind_hotkey(choice.owner)
 
 			return 'didn\'t-take-turn'
+
+def bind_hotkey(choice):
+	# Bind chosen item to the next available hotkey or replace an existing one
+	if choice in hotkeys:
+		message('Item is already bound.', libtcod.red)
+		return
+	if len(hotkeys) == 4:
+		libtcod.console_flush()
+		index = menu('Select the item to unbind.\n',
+					 [' - 1 -', ' - 2 -', ' - 3 -', ' - 4 -'], 30)
+		if index is not None:
+			hotkeys.pop(index)
+			hotkeys.insert(index, choice)
+		return
+
+	hotkeys.append(choice)
 
 def render_all():
 	# renders player's fov, draw objects, draw panel...
@@ -1193,6 +1227,10 @@ def render_all():
 							libtcod.BKGND_NONE, libtcod.CENTER,
 							'Souls ' + str(player.fighter.souls))
 
+	# display names of objects under the mouse.
+	# libtcod.console_print_ex(stats_panel, 1, 1, libtcod.BKGND_NONE,
+							 # libtcod.LEFT, get_names_under_mouse())
+
 	# blit contents of 'stats panel' to root console
 	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
 						 constants.STATS_PANEL_HEIGHT,
@@ -1207,14 +1245,36 @@ def render_all():
 
 	# Render frame around panel
 	libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
-	libtcod.console_print_frame(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
-                                constants.HOTKEY_PANEL_HEIGHT, False,
+	libtcod.console_print_frame(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH
+                                ,constants.HOTKEY_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
 
-	# display names of objects under the mouse.
-	libtcod.console_set_default_foreground(hotkey_panel, libtcod.white)
-	libtcod.console_print_ex(hotkey_panel, 1, 1, libtcod.BKGND_NONE,
-							 libtcod.LEFT, get_names_under_mouse())
+	i = 1
+	for item in hotkeys:
+		libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
+		libtcod.console_print_ex(hotkey_panel, 1, (i*2)-1, libtcod.BKGND_NONE,
+								libtcod.LEFT, str(i) + '>>')
+		libtcod.console_set_default_foreground(hotkey_panel, item.color)
+		libtcod.console_print_ex(hotkey_panel, 5, (i*2)-1, libtcod.BKGND_NONE,
+								libtcod.LEFT, item.name)
+		libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
+		libtcod.console_hline(hotkey_panel, 1, i*2, constants.HOTKEY_PANEL_WIDTH - 5)
+		i += 1
+
+	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-3, 10, 7
+                                # ,6, False,
+								# libtcod.BKGND_NONE, None)
+	# libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-2, 11, libtcod.BKGND_NONE,
+							 # libtcod.LEFT, 'Estus\nFlask')
+	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-9, 16, 6
+                                # ,6, False,
+								# libtcod.BKGND_NONE, None)
+	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2+3, 16, 6
+                                # ,6, False,
+								# libtcod.BKGND_NONE, None)
+	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-3, 22, 6
+                                # ,6, False,
+								# libtcod.BKGND_NONE, None)
 
 	# display current dungeon level to player
 	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
@@ -1249,6 +1309,9 @@ def render_all():
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 	# Player stats
 	width += render_action(width + 6, 0, ' S', 'tats ',
+						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
+	# Bind
+	width += render_action(width + 7, 0, ' B', 'ind ',
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 
 	# blit contents of 'action panel' to root console
@@ -1400,6 +1463,11 @@ def menu(header, options, width):
 	if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
 		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
+	# When waiting for layered menus, make the background one more transparent
+	libtcod.console_clear(window)
+	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+	libtcod.console_flush()
+
 	# convert ASCII code to an index, if it corresponds to an option return it
 	index = key.c - ord('a')
 	if index >= 0 and index < len(options):
@@ -1429,15 +1497,15 @@ def inventory_menu(header):
 		return None
 
 	return inventory[index].item
-	
+
 def bonfire_menu():
 	# Bonfire menu where player levels up
 
 	restore_player()
-	
+
 	# Build the options for this menu
 	choice = menu('', [' Level up', ' Cancel'], constants.BONFIRE_WIDTH)
-	
+
 	if choice == 0: # level up
 		# Check if player has enough souls to level up
 		check_level_up()
@@ -1448,24 +1516,24 @@ def main_menu():
 	# main menu of game
 	img = libtcod.image_load('menu_background.png')
 	
-	while not libtcod.console_is_window_closed():		
+	while not libtcod.console_is_window_closed():
 		# show the background image, at twice the regular console resolution
 		libtcod.image_blit_2x(img, 0, 0, 0)
-		
+
 		# title of game and author
 		libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
 								 constants.SCREEN_HEIGHT/2-8,
-								 libtcod.BKGND_NONE, libtcod.CENTER, 
+								 libtcod.BKGND_NONE, libtcod.CENTER,
 								 'Rogue Souls')
 		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
 								 constants.SCREEN_HEIGHT-2,
-								 libtcod.BKGND_NONE, libtcod.CENTER, 
+								 libtcod.BKGND_NONE, libtcod.CENTER,
 								 'By David')
-		
-		# show options and wait for the player's choice	
+
+		# show options and wait for the player's choice
 		choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
-		
+
 		if choice == 0: # new game
 			new_game()
 			play_game()
@@ -1478,11 +1546,11 @@ def main_menu():
 			play_game()
 		elif choice == 2: # quit
 			break
-			
+
 def new_game():
 	# pieces needed to start a new game
 	global player, inventory, game_msgs, game_state, dungeon_level
-	global estus_flask, estus_flask_max
+	global estus_flask, estus_flask_max, hotkeys
 	
 	# initialize player object
 	fighter_component = Fighter(hp=100, defense=1, power=2, stamina=30, souls=0,
@@ -1504,7 +1572,10 @@ def new_game():
 
 	# Message log - composed of message and message color
 	game_msgs = []
-	
+
+	# Keys bound
+	hotkeys = []
+
 	# test message, welcoming player to dungeon.
 	message('Welcome stranger! Prepare to perish in the Tombs '
 			'of the Ancient King.', libtcod.yellow)
@@ -1515,6 +1586,7 @@ def new_game():
 	estus_flask = Object(0, 0, 'estus flask', 'u',
 						 libtcod.orange, item=item_component)
 	inventory.append(estus_flask)
+	hotkeys.append(estus_flask)
 	estus_flask.always_visible = True
 
 	# starting equipment for player
