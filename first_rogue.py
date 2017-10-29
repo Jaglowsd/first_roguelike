@@ -66,7 +66,57 @@ class Object:
 		dx = int(round(dx / magnitude))
 		dy = int(round(dy / magnitude))
 		cls.move(dx, dy)
-		
+
+	def move_astar(cls, target):
+		# A_star algo for monster pathfinding
+
+		# Create an fov map that has dimensions of the map
+		fov = libtcod.map_new(constants.MAP_WIDTH, constants.MAP_HEIGHT)
+
+		# Scan the current map each turn and set all walks as unwalkable
+		for y1 in range(constants.MAP_HEIGHT):
+			for x1 in range(constants.MAP_WIDTH):
+				libtcod.map_set_properties(fov, x1, y1,
+										   not map[x1][y1].block_sight,
+										   not map[x1][y1].blocked)
+
+		# Scan all objects to see if there are ones that need to be navigated around
+		# Check that object isn't cls/target (start and end are free)
+		# AI class handles situation if cls is next to target
+		for obj in objects:
+			if obj.blocks and obj is not cls and obj is not target:
+				# Set tile as wall, so it is navigated around
+				# (x, y) = to_camera_coordinates(obj.x, obj.y)
+				libtcod.map_set_properties(fov, obj.x, obj.y, True, False)
+
+		# Allocate an A* path
+		# 1.41 is the normal cost of diagonal movement, set to 0 if diagonal movements are prohibited
+		my_path = libtcod.path_new_using_map(fov, 1.41)
+
+		# Compute path between cls and target
+		# (cam_cls_x, cam_cls_y) = to_camera_coordinates(cls.x, cls.y)
+		libtcod.path_compute(my_path, cls.x, cls.y, target.x, target.y)
+
+		# Check is path exists, and in this case, also the path is shorter than 25 tiles
+		# Path size matters if you want the monster to use alternative longer paths
+		# (through other rooms for example) if fror example the player is in a corridor
+		# It makes sense to keep the path size relatively low to keep monsters
+		# from running around the map if theres an alternative path really far away
+		if not libtcod.path_is_empty(my_path) and libtcod.path_size(my_path) < 25:
+			# find the next coordinates in the computed path
+			(x, y) = libtcod.path_walk(my_path, True)
+			if x or y:
+				# set cls's coordinates to the next path tile
+				cls.x = x
+				cls.y = y
+			else:
+				# Revert back to old move function as a backup. Monster will
+				# move towards player in a hallway for example.
+				cls.move_towards(target)
+
+		# Delete path to free memory
+		libtcod.path_delete(my_path)
+
 	def distance_to(cls, other):
 		# return distance between this object and any other Object.
 		dx = other.x - cls.x
@@ -347,8 +397,9 @@ class BasicMonster:
 		monster = cls.owner
 		if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
 			# move towards player if not within attacking range (1 tile).
+			# Basic moving towards player is replaced with an astar algo
 			if monster.distance_to(player) >= 2:
-				monster.move_towards(player.x, player.y)
+				monster.move_astar(player)
 				
 			# attack player if within 1 tile and player has hp.
 			elif player.fighter.hp > 0:
