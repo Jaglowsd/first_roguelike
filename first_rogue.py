@@ -97,7 +97,7 @@ class Object:
 		objects.insert(0, cls)
 
 	def clear(cls):
-		# erase the charatcer that represents ths object.
+		# erase the character that represents this object.
 		(x, y) = to_camera_coordinates(cls.x, cls.y)
 		if x is not None:
 			libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_NONE)
@@ -240,6 +240,7 @@ class Fighter:
 		self.souls = souls # amount of souls given to player
 		self.death_function = death_function		
 		self.type = type # What kind of enemy this object is
+		self.flicker = None # Flicker state of fighter
 		if modifier is not None: # Apply any name base stat modifiers
 			self.apply_modifier(modifier)
 		
@@ -269,7 +270,8 @@ class Fighter:
 		# apply damage if possible
 		if damage > 0:
 			cls.hp -= damage
-
+			# Set flicker to not none
+			cls.flicker = True
 			# Check if fighter is dead, then call their death function.
 			if cls.hp <= 0:
 				d_function = cls.death_function
@@ -780,6 +782,34 @@ def cast_fireball(cls):
 					+ str(constants.FIREBALL_DAMAGE) + ' hitpoints.', libtcod.orange)
 			object.fighter.take_damage(constants.FIREBALL_DAMAGE)
 
+def flicker_all():
+	# Combat indicator by simulating a flickering effect by coloring hit objects
+	global fov_recompute
+	render_all()
+	timer = 0
+
+	while(timer < 3):
+		for frame in range(5):
+			for obj in objects:
+				if obj.fighter:
+					if (libtcod.map_is_in_fov(fov_map, obj.x, obj.y)
+						and obj.fighter.flicker != None):
+						(x,y) = to_camera_coordinates(obj.x, obj.y)
+						libtcod.console_set_char_foreground(con, x, y,
+															libtcod.red)
+						libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
+											constants.MAP_HEIGHT, 0,
+											constants.MAP_X, constants.MAP_Y)
+		libtcod.console_check_for_keypress()
+		render_gui()
+		libtcod.console_flush() # show result
+		timer += 1
+	fov_recompute = True
+	render_all()
+	for obj in objects:
+		if obj.fighter:
+			obj.fighter.flicker = None
+
 def player_death(player):
 	# Modify game state in the event the player dies.
 	global game_state
@@ -1185,7 +1215,9 @@ def render_all():
 	libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
 						 constants.MAP_HEIGHT, 0,
 						 constants.MAP_X, constants.MAP_Y)
-	
+
+def render_gui():
+
 	###############
 	## MSG Panel ##
 	###############
@@ -1718,9 +1750,16 @@ def play_game():
 		
 		# render screen
 		render_all()
+		render_gui()
 		
 		# Flush our changes to the console.
 		libtcod.console_flush()
+
+		# Flicker object that took damage
+		for object in objects:
+			if object.fighter:
+				if object.fighter.flicker is not None:
+					flicker_all()
 
 		# Clear objects in list.
 		for object in objects:
