@@ -825,7 +825,7 @@ def loot_drop(monster):
 		elif choice == constants.RATIONS:
 			item_component = Item(use_function=cast_heal)
 			item = Object(monster.x, monster.y, constants.RATIONS, 'x',
-						  libtcod.dark_sepia, item=item_component,
+						  libtcod.sepia, item=item_component,
 						  always_visible=True)
 		elif choice == constants.GOLD:
 			message('5 gold was dropped by the orc', libtcod.gold)
@@ -1037,7 +1037,7 @@ def handle_keys():
 			# test for other key presses.
 			key_chr = chr(key.c)
 
-			if key_chr == 'g': # pick up an item
+			if key_chr == 'e': # pick up an item
 				for object in objects:
 					if (object.x == player.x and object.y == player.y 
 						and object.item):
@@ -1070,7 +1070,7 @@ def handle_keys():
 					   constants.CHARACTER_SCREEN_WIDTH)
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
-						'\nDrop item: d\nPick up/loot: g\nCharacter stats: c\n'
+						'\nDrop item: d\nPick up/loot: e\nCharacter stats: c\n'
 						'Wait: p\nMovement: arrow keys\n')
 				menu(text, [], constants.CHARACTER_SCREEN_WIDTH)
 			if key_chr == 'b': # Binding menu
@@ -1088,8 +1088,9 @@ def bind_hotkey(choice):
 		return
 	if len(hotkeys) == 4:
 		libtcod.console_flush()
-		index = menu('Select the item to unbind.\n',
-					 [' - 1 -', ' - 2 -', ' - 3 -', ' - 4 -'], 30)
+		index = menu('Max number of items bound, choose one to replace or esc to cancel.\n',
+					 [' - 1 -', ' - 2 -', ' - 3 -', ' - 4 -'],
+					 constants.HOTKEY_BIND_WIDTH)
 		if index is not None:
 			hotkeys.pop(index)
 			hotkeys.insert(index, choice)
@@ -1306,7 +1307,7 @@ def render_all():
 	width += render_action(2, 0, ' I', 'nventory ',
 						   libtcod.yellow, libtcod.white, libtcod.darker_grey)
 	# Pick up/loot
-	width += render_action(width + 3, 0, ' Loot', '(G) ',
+	width += render_action(width + 3, 0, ' Loot', '(E) ',
 						   libtcod.white, libtcod.yellow, libtcod.darker_grey)
 	# Drop
 	width += render_action(width + 4, 0, ' D', 'rop ',
