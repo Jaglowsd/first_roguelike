@@ -852,7 +852,7 @@ def target_tile(max_range=None):
 		x -= constants.MAP_X
 		y -= constants.MAP_Y
 
-		# check for a left-click and within player fov, and 
+		# check for a left-click and within player fov, and
 		# that the max range isn't set or less than given max range
 		if (mouse.lbutton_pressed and libtcod.map_is_in_fov(fov_map, x, y) and
 			(max_range is None or player.distance(x, y) <= max_range)):
@@ -894,6 +894,7 @@ def get_names_under_mouse():
 
 	# return a string with name of object under the mouse.
 	(x, y) = (mouse.cx, mouse.cy)
+
 	# offset mouse positioning by map's new position and camera coordinates
 	(x, y) = (camera_x + x,camera_y + y)
 	x -= constants.MAP_X
@@ -1101,7 +1102,7 @@ def render_all():
 						libtcod.console_put_char_ex(con, x, y, '#',
 							libtcod.lighter_sepia, constants.color_dark_wall)
 					else:
-						libtcod.console_put_char_ex(con, x, y, '-',
+						libtcod.console_put_char_ex(con, x, y, '.',
 							libtcod.lighter_sepia, constants.color_dark_ground)
 			else:
 				# in player's FOV
@@ -1112,7 +1113,7 @@ def render_all():
 				else:
 					base = constants.color_dark_ground
 					light = constants.color_light_ground
-					char = '-'
+					char = '.'
 
 				r = float(x - fov_px + dx) * (x - fov_px + dx) + \
 					(y - fov_py + dy) * (y - fov_py + dy)
@@ -1150,7 +1151,8 @@ def render_all():
 	libtcod.console_set_default_background(msg_panel, libtcod.black)
 	libtcod.console_clear(msg_panel)
 
-	libtcod.console_set_default_foreground(msg_panel, libtcod.white)
+	# Render frame around panel
+	libtcod.console_set_default_foreground(msg_panel, libtcod.silver)
 	libtcod.console_print_frame(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
                                 constants.MSG_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
@@ -1174,6 +1176,9 @@ def render_all():
 	# prepare to render msg panel.
 	libtcod.console_set_default_background(stats_panel, libtcod.black)
 	libtcod.console_clear(stats_panel)
+
+	# Render frame around panel
+	libtcod.console_set_default_foreground(stats_panel, libtcod.silver)
 	libtcod.console_print_frame(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
                                 constants.STATS_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
@@ -1197,8 +1202,11 @@ def render_all():
 	## Hotkey Panel ##
 	##################
 	# prepare to render msg panel.
-	libtcod.console_set_default_background(hotkey_panel, libtcod.darkest_grey)
+	libtcod.console_set_default_background(hotkey_panel, libtcod.black)
 	libtcod.console_clear(hotkey_panel)
+
+	# Render frame around panel
+	libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
 	libtcod.console_print_frame(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
                                 constants.HOTKEY_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
@@ -1516,7 +1524,6 @@ def new_game():
 					libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
 	equip_component.equip()
-
 	dagger.always_visible = True
 
 def load_game():
