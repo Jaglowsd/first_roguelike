@@ -5,6 +5,12 @@ import shelve
 import sys
 
 import CONSTANTS as constants
+from rectangle_class import Rectangle
+from tile_class import Tile
+
+#############
+## Classes ##
+#############
 
 class Object:
 # this is a generic object: the player, monster, stairs, tiles, etc...
@@ -151,130 +157,6 @@ class Object:
 		(x, y) = to_camera_coordinates(cls.x, cls.y)
 		if x is not None:
 			libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_NONE)
-
-
-class Item:
-	# definition of item: items can be picked up and used.
-	def __init__(self, use_function=None, count=1):
-		self.use_function = use_function
-		self.count = count
-
-	def use(cls):
-		# special case where the item is a piece of equipment,
-		# the 'use' function toggles equip/dequip
-		if cls.owner.equipment:
-			cls.owner.equipment.toggle_equip()
-			return
-
-		# call the use function if it is defined.
-		if cls.use_function is None:
-			message('The ' + cls.owner.name + ' cannot be used.')
-		else:
-			# call the use function here and see if the return is 'cancelled'
-
-			# Special case of using estus flask
-			if cls.owner == estus_flask:
-				if estus_flask.item.count == 0:
-					message('Your flask is empty...', libtcod.flame)
-				else:
-					if cls.use_function(cls) != 'cancelled':
-						estus_flask.item.count -= 1
-			else:
-				if cls.use_function(cls) != 'cancelled':
-					inventory.remove(cls.owner) # use item if it wasn't cancelled
-					if cls.owner in hotkeys:
-						hotkeys.remove(cls.owner) # Remove form hotkey if used
-		
-	def pick_up(cls):
-		# add item to player's inventory and remove it from the map.
-		if len(inventory) >= 26:
-			message('Your inventory is full! Cannot pick up ' 
-					+ cls.owner.name 
-					+ '.', libtcod.red)
-		else:
-			inventory.append(cls.owner)
-			objects.remove(cls.owner)
-			message('Picked up ' + cls.owner.name + '!', libtcod.green)
-			
-			# special case where the item is a piece of equipment,
-			# the 'use' function toggles equip/dequip
-			equipment = cls.owner.equipment
-			if (equipment 
-				and equipment.get_equiped_in_slot(equipment.slot) is None):
-				equipment.equip()
-
-	def drop(cls):
-		# drop item from inventory and leave it at player's coordinates
-		# Cannot drop estus flask
-		if cls.owner != estus_flask:
-			inventory.remove(cls.owner)
-			cls.owner.x = player.x
-			cls.owner.y = player.y
-			objects.append(cls.owner)
-			cls.owner.send_to_front()
-			message('Dropped ' + cls.owner.name, libtcod.yellow)
-
-			# when dropping equipment we need to dequip it
-			equipment = cls.owner.equipment
-			if equipment and equipment.is_equiped:
-				equipment.dequip()
-
-			# Remove from hotkeys if was bound
-			if cls.owner in hotkeys:
-					hotkeys.remove(cls.owner)
-		else:
-			message('Don\'t be a fool...', libtcod.red)
-
-
-class Equipment:
-	# objects that can be equiped to player, automatically adds item component
-	def __init__(self, slot, power_bonus=0, defense_bonus=0,
-				 max_hp_bonus=0, max_stamina_bonus=0, stamina_usage=0):
-		# where on the players person its equiped (i.e. slot)
-		self.slot = slot
-		self.is_equiped = False
-		self.power_bonus = power_bonus
-		self.defense_bonus = defense_bonus
-		self.max_hp_bonus = max_hp_bonus		
-		self.max_stamina_bonus = max_stamina_bonus
-		self.stamina_usage = stamina_usage
-		
-	def toggle_equip(cls): # toggle equip/dequip status
-		if cls.is_equiped:
-			cls.dequip()
-		else:
-			cls.equip()
-			
-	def equip(cls):
-		# if the slot is already in use, dequip the item and equip the new one
-		old_equip = cls.get_equiped_in_slot(cls.slot)
-		if old_equip is not None:
-			old_equip.dequip()
-	
-		# equip object and display message
-		cls.is_equiped = True
-		message('Equiped ' + cls.owner.name + ' to ' + cls.slot + '.', 
-				libtcod.light_green)
-				
-	def dequip(cls):
-		# dequip object and show message
-		if not cls.is_equiped: 
-			return
-		cls.is_equiped = False
-		message('Removed ' + cls.owner.name + ' from ' + cls.slot + '.', 
-				libtcod.light_yellow)
-				
-	def get_equiped_in_slot(cls, slot):
-		# returns the equipment in a slot, or None of it's empty
-		for obj in inventory:
-			if (obj.equipment and obj.equipment.slot == slot 
-				and obj.equipment.is_equiped):
-				return obj.equipment
-		return None
-
-	def use_stamina(cls):
-		# equipment usage drains stamina
-		player.fighter.stamina -= cls.stamina_usage
 
 
 class Fighter:
@@ -424,69 +306,138 @@ class ConfusedMonster:
 			message(cls.owner.name + ' is no longer confused.', libtcod.red)
 
 
-class Tile:
-	# Tiles of map and their properties.
-	def __init__(self, blocked, block_sight=None):
-		# Create tile to be used as wall, ground, etc...
-		self.blocked = blocked
+class Item:
+	# definition of item: items can be picked up and used.
+	def __init__(self, use_function=None, count=1):
+		self.use_function = use_function
+		self.count = count
+
+	def use(cls):
+		# special case where the item is a piece of equipment,
+		# the 'use' function toggles equip/dequip
+		if cls.owner.equipment:
+			cls.owner.equipment.toggle_equip()
+			return
+
+		# call the use function if it is defined.
+		if cls.use_function is None:
+			message('The ' + cls.owner.name + ' cannot be used.')
+		else:
+			# call the use function here and see if the return is 'cancelled'
+
+			# Special case of using estus flask
+			if cls.owner == estus_flask:
+				if estus_flask.item.count == 0:
+					message('Your flask is empty...', libtcod.flame)
+				else:
+					if cls.use_function(cls) != 'cancelled':
+						estus_flask.item.count -= 1
+			else:
+				if cls.use_function(cls) != 'cancelled':
+					inventory.remove(cls.owner) # use item if it wasn't cancelled
+					if cls.owner in hotkeys:
+						hotkeys.remove(cls.owner) # Remove form hotkey if used
 		
-		# By default, if a tile is blocked, it also blocks sight.
-		if block_sight is None:
-			block_sight = blocked
-		self.block_sight = blocked
+	def pick_up(cls):
+		# add item to player's inventory and remove it from the map.
+		if len(inventory) >= 26:
+			message('Your inventory is full! Cannot pick up '
+					+ cls.owner.name
+					+ '.', libtcod.red)
+		else:
+			inventory.append(cls.owner)
+			objects.remove(cls.owner)
+			message('Picked up ' + cls.owner.name + '!', libtcod.green)
+
+			# special case where the item is a piece of equipment,
+			# the 'use' function toggles equip/dequip
+			equipment = cls.owner.equipment
+			if (equipment
+				and equipment.get_equiped_in_slot(equipment.slot) is None):
+				equipment.equip()
+
+	def drop(cls):
+		# drop item from inventory and leave it at player's coordinates
+		# Cannot drop estus flask
+		if cls.owner != estus_flask:
+			inventory.remove(cls.owner)
+			cls.owner.x = player.x
+			cls.owner.y = player.y
+			objects.append(cls.owner)
+			cls.owner.send_to_front()
+			message('Dropped ' + cls.owner.name, libtcod.yellow)
+
+			# when dropping equipment we need to dequip it
+			equipment = cls.owner.equipment
+			if equipment and equipment.is_equiped:
+				equipment.dequip()
+
+			# Remove from hotkeys if was bound
+			if cls.owner in hotkeys:
+					hotkeys.remove(cls.owner)
+		else:
+			message('Don\'t be a fool...', libtcod.red)
+
+
+class Equipment:
+	# objects that can be equiped to player, automatically adds item component
+	def __init__(self, slot, power_bonus=0, defense_bonus=0,
+				 max_hp_bonus=0, max_stamina_bonus=0, stamina_usage=0):
+		# where on the players person its equiped (i.e. slot)
+		self.slot = slot
+		self.is_equiped = False
+		self.power_bonus = power_bonus
+		self.defense_bonus = defense_bonus
+		self.max_hp_bonus = max_hp_bonus
+		self.max_stamina_bonus = max_stamina_bonus
+		self.stamina_usage = stamina_usage
 		
-		# tiles begin unexplored
-		self.explored = False
+	def toggle_equip(cls): # toggle equip/dequip status
+		if cls.is_equiped:
+			cls.dequip()
+		else:
+			cls.equip()
+
+	def equip(cls):
+		# if the slot is already in use, dequip the item and equip the new one
+		old_equip = cls.get_equiped_in_slot(cls.slot)
+		if old_equip is not None:
+			old_equip.dequip()
+
+		# equip object and display message
+		cls.is_equiped = True
+		message('Equiped ' + cls.owner.name + ' to ' + cls.slot + '.',
+				libtcod.light_green)
+
+	def dequip(cls):
+		# dequip object and show message
+		if not cls.is_equiped:
+			return
+		cls.is_equiped = False
+		message('Removed ' + cls.owner.name + ' from ' + cls.slot + '.',
+				libtcod.light_yellow)
+
+	def get_equiped_in_slot(cls, slot):
+		# returns the equipment in a slot, or None of it's empty
+		for obj in inventory:
+			if (obj.equipment and obj.equipment.slot == slot
+				and obj.equipment.is_equiped):
+				return obj.equipment
+		return None
+
+	def use_stamina(cls):
+		# equipment usage drains stamina
+		player.fighter.stamina -= cls.stamina_usage
 
 
-class Rectangle:
-	# A rectangle on map. Used to represent rooms.
-	def __init__(self, x, y, w, h):
-		# Top left corner, and bottom right corner of rectangle.
-		self.x1 = x
-		self.y1 = y
-		self.x2 = x + w
-		self.y2 = y + h
-		
-	def center(self):
-		# Determine the center of the rectangle.
-		center_x = (self.x2 + self.x1) / 2
-		center_y = (self.y2 + self.y1) / 2
-		return (center_x, center_y)
-		
-	def intersect(self, other):
-		# Determine if two different rectangles intersect.
-		return (self.x1 <= other.x2 and self.x2 >= other.x1 and
-                self.y1 <= other.y2 and self.y2 >= other.y1)
+##########################
+## End of Classes (EOC) ##
+##########################
 
 
-def create_room(room):
-	# Go through given room making the rectangle passable.
-	global map	
-	# Range() goes from room.x1 + 1 to room.x2 - 1, so we exclude the borders of
-	# the rectangle to create walls.
-	for x in range(room.x1 + 1, room.x2):
-		for y in range(room.y1 + 1, room.y2):
-			map[x][y].block_sight = False
-			map[x][y].blocked = False
-
-def create_h_tunnel(x1, x2, y):
-	# make a horizontal tunnel.
-	global map
-	# Given points to start, end, and a height-we can carve a horizontal tunnel
-	# between rooms.
-	for x in range(min(x1, x2), max(x1, x2) + 1):
-		map[x][y].blocked = False
-		map[x][y].block_sight = False
-
-def create_v_tunnel(y1, y2, x):
-	# make a vertical tunnel.
-	global map
-	# Given points to start, end, and a width-we can carve a vertical tunnel
-	# between rooms.
-	for y in range(min(y1, y2), max(y1, y2) + 1):
-		map[x][y].blocked = False
-		map[x][y].block_sight = False
+########################
+## Generate Map (GM) ###
+########################
 
 def make_map():
 	# randomly generates rooms to design a map.
@@ -574,18 +525,42 @@ def make_map():
 	objects.append(stairs)
 	stairs.send_to_front() # so its drawn below monsters
 	
-def next_level():
-	global dungeon_level
-	# bring player to new dungeon level-redraw map and fov
-	message('You take a moment to rest and recover your strenth', 
-			libtcod.light_violet)
-	player.fighter.heal(player.fighter.max_hp/2) # heal player by 50% max hp
-	
-	message('After a rare moment of peace, you descend depper into the dungeon', 
-			libtcod.red)
-	dungeon_level += 1
-	make_map()
-	initialize_fov()
+def create_room(room):
+	# Go through given room making the rectangle passable.
+	global map
+	# Range() goes from room.x1 + 1 to room.x2 - 1, so we exclude the borders of
+	# the rectangle to create walls.
+	for x in range(room.x1 + 1, room.x2):
+		for y in range(room.y1 + 1, room.y2):
+			map[x][y].block_sight = False
+			map[x][y].blocked = False
+
+def create_h_tunnel(x1, x2, y):
+	# make a horizontal tunnel.
+	global map
+	# Given points to start, end, and a height-we can carve a horizontal tunnel
+	# between rooms.
+	for x in range(min(x1, x2), max(x1, x2) + 1):
+		map[x][y].blocked = False
+		map[x][y].block_sight = False
+
+def create_v_tunnel(y1, y2, x):
+	# make a vertical tunnel.
+	global map
+	# Given points to start, end, and a width-we can carve a vertical tunnel
+	# between rooms.
+	for y in range(min(y1, y2), max(y1, y2) + 1):
+		map[x][y].blocked = False
+		map[x][y].block_sight = False
+
+################################
+## End of Generate Map (EOGM) ##
+################################
+
+
+##########################
+## Place Objects (Plob) ##
+##########################
 
 def place_objects(room):
 	# place objects on map
@@ -769,6 +744,10 @@ def is_blocked(x, y):
 	
 	return False
 
+###################################
+## End of Place Objects (EOPLob) ##
+###################################
+
 def restore_player():
 	global estus_flask, estus_flask_max
 
@@ -832,34 +811,6 @@ def cast_fireball(cls):
 			message(object.name + ' is caught in the explosion taking ' 
 					+ str(constants.FIREBALL_DAMAGE) + ' hitpoints.', libtcod.orange)
 			object.fighter.take_damage(constants.FIREBALL_DAMAGE)
-
-def flicker_all():
-	# Combat indicator by simulating a flickering effect by coloring hit objects
-	global fov_recompute
-	render_all()
-	timer = 0
-
-	while(timer < 3):
-		for frame in range(5):
-			for obj in objects:
-				if obj.fighter:
-					if (libtcod.map_is_in_fov(fov_map, obj.x, obj.y)
-						and obj.fighter.flicker != None):
-						(x,y) = to_camera_coordinates(obj.x, obj.y)
-						libtcod.console_set_char_foreground(con, x, y,
-															libtcod.red)
-						libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
-											constants.MAP_HEIGHT, 0,
-											constants.MAP_X, constants.MAP_Y)
-		libtcod.console_check_for_keypress()
-		render_gui()
-		libtcod.console_flush() # show result
-		timer += 1
-	fov_recompute = True
-	render_all()
-	for obj in objects:
-		if obj.fighter:
-			obj.fighter.flicker = None
 
 def player_death(player):
 	# Modify game state in the event the player dies.
@@ -1493,6 +1444,34 @@ def to_camera_coordinates(x, y):
 
 	return (x, y)
 
+def flicker_all():
+	# Combat indicator by simulating a flickering effect by coloring hit objects
+	global fov_recompute
+	render_all()
+	timer = 0
+
+	while(timer < 3):
+		for frame in range(5):
+			for obj in objects:
+				if obj.fighter:
+					if (libtcod.map_is_in_fov(fov_map, obj.x, obj.y)
+						and obj.fighter.flicker != None):
+						(x,y) = to_camera_coordinates(obj.x, obj.y)
+						libtcod.console_set_char_foreground(con, x, y,
+															libtcod.red)
+						libtcod.console_blit(con, 0, 0, constants.MAP_WIDTH,
+											constants.MAP_HEIGHT, 0,
+											constants.MAP_X, constants.MAP_Y)
+		libtcod.console_check_for_keypress()
+		render_gui()
+		libtcod.console_flush() # show result
+		timer += 1
+	fov_recompute = True
+	render_all()
+	for obj in objects:
+		if obj.fighter:
+			obj.fighter.flicker = None
+
 def message(new_msg, color=libtcod.white):
 	# Append messages to game feed while removing old ones if buffer is full.
 
@@ -1781,6 +1760,19 @@ def initialize_fov():
 
 	noise = libtcod.noise_new(2)
 	fov_noise = libtcod.noise_new(1, 1.0, 1.0)
+
+def next_level():
+	global dungeon_level
+	# bring player to new dungeon level-redraw map and fov
+	message('You take a moment to rest and recover your strenth',
+			libtcod.light_violet)
+	player.fighter.heal(player.fighter.max_hp/2) # heal player by 50% max hp
+
+	message('After a rare moment of peace, you descend depper into the dungeon',
+			libtcod.red)
+	dungeon_level += 1
+	make_map()
+	initialize_fov()
 
 def play_game():
 	global key, mouse, fov_torchx, camera_x, camera_y
