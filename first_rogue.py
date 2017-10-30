@@ -1692,7 +1692,7 @@ def new_game():
 def load_game():
 	# load shelved game
 	global map, objects, inventory, player, game_msgs, game_state
-	global stairs, dungeon_level, estus_flask, estus_flask_max
+	global stairs, dungeon_level, estus_flask, estus_flask_max, hotkeys
 
 	file = shelve.open('savegame.sav', 'r')
 	map = file['map']
@@ -1705,6 +1705,7 @@ def load_game():
 	stairs = objects[file['stairs_index']]
 	estus_flask = inventory[file['estus_index']]
 	estus_flask_max = file['estus_max']
+	hotkeys = file['hotkeys']
 	file.close()
 	
 	initialize_fov()
@@ -1725,6 +1726,7 @@ def save_game():
 	file['stairs_index'] = objects.index(stairs)
 	file['estus_index'] = inventory.index(estus_flask)
 	file['estus_max'] = estus_flask_max
+	file['hotkeys'] = hotkeys
 	file.close()
 
 	clear_consoles()
