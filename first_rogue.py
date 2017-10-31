@@ -1472,6 +1472,19 @@ def flicker_all():
 		if obj.fighter:
 			obj.fighter.flicker = None
 
+def move_cursor(direction, cursor, y_position, options, window):
+	# Unhighlight the current cursor's position text, increment/decrement
+	# cursor and y_position, highlight new cursor location.
+	# Return the cursor and y_position's new values
+	for index in range(len('( )' + options[cursor])):
+		libtcod.console_set_char_foreground(window, index, y_position, libtcod.white)
+	cursor += direction
+	y_position += direction
+	for index in range(len('( )' + options[cursor])):
+		libtcod.console_set_char_foreground(window, index, y_position, libtcod.yellow)
+
+	return (cursor, y_position)
+
 ###########
 ## Menus ##
 ###########
@@ -1503,21 +1516,47 @@ def menu(header, options, width):
 	letter_index = ord('a')
 	for option_text in options:
 		text = '(' + chr(letter_index) + ')' + option_text
+		if y == header_height:
+			libtcod.console_set_default_foreground(window, libtcod.yellow)
 		libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
 								 libtcod.LEFT, text)
+		libtcod.console_set_default_foreground(window, libtcod.white)
 		y += 1
 		letter_index += 1
+
+	# cursor position
+	cursor = 0
+	y_position = header_height
 
 	# blit the contents of 'window' to the root console
 	x = constants.CAMERA_WIDTH/2
 	y = constants.CAMERA_HEIGHT/2
-	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.6)
 
 	# present the root console to the player and wait for a key press
 	libtcod.console_flush()
-	key = libtcod.console_wait_for_keypress(True)
-	if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
-		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+
+	waiting = True
+	# Allow the player to navigate menus with the arrow keys if they choose
+	# Keys UP/DOWN navigate and ENTER selects the option
+	while waiting:
+		key = libtcod.console_wait_for_keypress(True)
+		if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
+			libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+		elif key.vk == libtcod.KEY_DOWN:
+			if cursor < len(options)-1:
+				(cursor, y_position) = move_cursor(1, cursor, y_position, options, window)
+				libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.0)
+				libtcod.console_flush()
+		elif key.vk == libtcod.KEY_UP:
+			if cursor > 0:
+				(cursor, y_position) = move_cursor(-1, cursor, y_position, options, window)
+				libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.0)
+				libtcod.console_flush()
+		elif key.vk == libtcod.KEY_ENTER:
+			return cursor
+		else:
+			waiting = False
 
 	# When waiting for layered menu, make the background one more transparent
 	libtcod.console_clear(window)
