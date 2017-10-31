@@ -1472,22 +1472,9 @@ def flicker_all():
 		if obj.fighter:
 			obj.fighter.flicker = None
 
-def message(new_msg, color=libtcod.white):
-	# Append messages to game feed while removing old ones if buffer is full.
-
-	# split message among multiple lines if needed.
-	new_msg_lines = textwrap.wrap(new_msg, constants.MSG_PANEL_WIDTH)
-
-	for line in new_msg_lines:
-		# if the buffer is full, remove 1st line to make room for new one.
-		if len(game_msgs) == constants.MSG_PANEL_HEIGHT-2:
-			del game_msgs[0]
-
-		# add the new line as a tuple, with text and color.
-		game_msgs.append( (line, color) )
-
-def msgbox(text, width=50):
-	menu(text, [], width) # use menu() as a sort of 'message box'
+###########
+## Menus ##
+###########
 
 def menu(header, options, width):
 	global key, mouse
@@ -1529,11 +1516,10 @@ def menu(header, options, width):
 	# present the root console to the player and wait for a key press
 	libtcod.console_flush()
 	key = libtcod.console_wait_for_keypress(True)
-
 	if key.vk == libtcod.KEY_ENTER and key.lalt: # toggle fullscreen keys
 		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
-	# When waiting for layered menus, make the background one more transparent
+	# When waiting for layered menu, make the background one more transparent
 	libtcod.console_clear(window)
 	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 	libtcod.console_flush()
@@ -1557,7 +1543,7 @@ def inventory_menu(header):
 				 text+= ' x' + str(item.item.count)
 			# show additional info about equipment
 			if item.equipment and item.equipment.is_equiped:
-				text += ' (on ' + item.equipment.slot + ')'
+				text += ' (' + item.equipment.slot + ')'
 			options.append(text)
 
 	index = menu(header, options, constants.INVENTORY_WIDTH)
@@ -1616,6 +1602,23 @@ def main_menu():
 			play_game()
 		elif choice == 2: # quit
 			break
+
+def message(new_msg, color=libtcod.white):
+	# Append messages to game feed while removing old ones if buffer is full.
+
+	# split message among multiple lines if needed.
+	new_msg_lines = textwrap.wrap(new_msg, constants.MSG_PANEL_WIDTH)
+
+	for line in new_msg_lines:
+		# if the buffer is full, remove 1st line to make room for new one.
+		if len(game_msgs) == constants.MSG_PANEL_HEIGHT-2:
+			del game_msgs[0]
+
+		# add the new line as a tuple, with text and color.
+		game_msgs.append( (line, color) )
+
+def msgbox(text, width=50):
+	menu(text, [], width) # use menu() as a sort of 'message box'
 
 def new_game():
 	# pieces needed to start a new game
