@@ -590,18 +590,18 @@ class Armor:
 def make_map():
 	# randomly generates rooms to design a map.
 	global map, objects, stairs, bonfire
-	
+
 	# Store our objects to iterate through
 	objects = [player]
-	
+
 	# Fill map with unblocked tiles.
 	map = [[Tile(True)
 		for y in range(constants.MAP_HEIGHT)]
 			for x in range(constants.MAP_WIDTH)]
-	
+
 	rooms = []
 	num_rooms = 0
-	
+
 	for r in range(constants.MAX_ROOMS):
 		# random width and height for rooms.
 		w = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
@@ -611,17 +611,17 @@ def make_map():
 		# random position without going out of bounds.
 		x = libtcod.random_get_int(0, 0, constants.MAP_WIDTH - w - 1)
 		y = libtcod.random_get_int(0, 0, constants.MAP_HEIGHT - h - 1)
-		
+
 		# Create the room as a rectangle object.
 		new_room = Rectangle(x, y, w ,h)
-		
+
 		# Check that new_room does not intersect with existing rooms.
 		failed = False
 		for other_room in rooms:
 			if new_room.intersect(other_room):
 				failed = True
 				break
-			
+
 		# no intersections found, so room is valid.
 		if not failed:
 			# 'paint' to map's tiles.
