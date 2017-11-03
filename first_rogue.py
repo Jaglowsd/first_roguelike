@@ -159,13 +159,6 @@ class Object:
 			libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_NONE)
 
 
-class Combat:
-	# Attack and defense stats of any type
-	def __init__(self, atk, defs):
-		self.atk = atk
-		self.defs = defs
-
-
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
 	def __init__(self, hp, defense, power, stamina, souls, death_function=None,
@@ -174,15 +167,13 @@ class Fighter:
 				 magic_atk=0, str=1, dex=1, int=1):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
-		self.base_defense = defense
-		self.base_power = power		
 		self.base_str = str # Strength
 		self.base_dex = dex # Dexterity
 		self.base_int = int # Intelligence
-		self.base_phys = Combat(phys_atk, phys_def) # phys atk/def
-		self.base_fire = Combat(fire_atk, fire_def) # fire atk/def
-		self.base_lightning = Combat(lightning_atk, lightning_def) # lgthning atk/def
-		self.base_magic = Combat(magic_atk, magic_def) # magic atk/def
+		self.base_phys = Combat(phys_atk, phys_def, 0) # phys atk/def
+		self.base_fire = Combat(fire_atk, fire_def, self.base_str) # fire atk/def
+		self.base_lightning = Combat(lightning_atk, lightning_def, self.base_dex) # lgthning atk/def
+		self.base_magic = Combat(magic_atk, magic_def, self.base_int) # magic atk/def
 		self.base_max_stamina = stamina # player stamina
 		self.stamina = stamina
 		self.souls = souls # amount of souls given to player
@@ -191,127 +182,98 @@ class Fighter:
 		self.flicker = None # Flicker state of fighter
 		if modifier is not None: # Apply any name base stat modifiers
 			self.apply_modifier(modifier)
-		
-	@property
-	def power(self):
-		# return actual power by summing base power to all bonuses
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.power_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_power + bonus
 
-	# Str, dex, and int may be increased slightly through equipment.
+	# Strength, Dexterity, and Intelligence
 	@property
-	def str(self): 
+	def str(self):
 		# return actual strength by summing base strength to all bonuses
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.str_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_str + bonus
+		bonus = sum(equipment.armor.str_bonus for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_str + bonus
+		return self.base_str
 
 	@property
 	def dex(self):
 		# return actual dex by summing base dex to all bonuses
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.dex_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_dex + bonus
+		bonus = sum(equipment.armor.dex_bonus for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_dex + bonus
+		return self.base_dex
 
 	@property
 	def int(self):
 		# return actual int by summing base int to all bonuses
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.int_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_int + bonus
+		bonus = sum(equipment.armor.int_bonus for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_int + bonus
+		return self.base_int
 
+	# Defense types #
 	@property
 	def phys_def(self):
-		# return actual phys def by combining base phys def and armor phys_def
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.phys_def for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_phys.defs + bonus
+		# return actual phys def by combining base phys def, armor phys_def
+		bonus = sum(equipment.armor.phys_def for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_phys.defs + bonus
+		return self.base_phys.defs
 
 	@property
 	def fire_def(self):
-		# return actual fire_def by combining base fire_def and armor phys_def
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.phys_def for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_fire.defs + bonus
+		# return actual fire_def by combining base fire_def and armor fire_def
+		bonus = sum(equipment.armor.fire_def for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_fire.defs + bonus
+		return self.base_fire.defs
 
 	@property
 	def lightning_def(self):
 		# return actual lightning_def by combining base lightning_def and armor lightning_def
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.lightning_def for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_lightning.defs + bonus
+		bonus = sum(equipment.armor.lightning_def for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_lightning.defs + bonus
+		return self.base_lightning.defs
 
 	@property
 	def magic_def(self):
 		# return actual magic def by combining base magic def and armor magic_def
-		bonus = 0
-		if equipment.armor:
-			bonus = sum(equipment.armor.magic_def for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_magic.defs + bonus
-		
+		bonus = sum(equipment.armor.magic_def for equipment in get_all_equiped(self.owner) if equipment.armor)
+		if bonus: return self.base_magic.defs + bonus
+		return self.base_magic.defs
+
+	# Attack types #
 	@property
 	def phys_atk(self):
 		# return actual phys atk by combining base phys atk and weapon phys_atk
-		bonus = 0
-		if equipment.weapon:
-			bonus = sum(equipment.weapon.phys_atk for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_phys.atk + bonus
+		bonus = sum(equipment.weapon.phys_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
+		if bonus: return self.base_phys.atk + bonus
+		return self.base_phys.atk
 
 	@property
 	def fire_atk(self):
 		# return actual fire_atk by combining base fire_atk and weapon fire_atk
-		bonus = 0
-		if equipment.weapon:
-			bonus = sum(equipment.weapon.fire_atk for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_fire.atk + bonus
+		bonus = sum(equipment.weapon.fire_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
+		if bonus: return bonus + self.base_fire.bns
+		return self.base_fire.atk
 
 	@property
 	def lightning_atk(self):
 		# return actual lightning_atk by combining base lightning_atk and weapon lightning_atk
-		bonus = 0
-		if equipment.weapon:
-			bonus = sum(equipment.weapon.lightning_atk for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_lightning.atk + bonus
+		bonus = sum(equipment.weapon.lightning_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
+		if bonus: return bonus + self.base_lightning.bns
+		return self.base_lightning.atk
 
 	@property
 	def magic_atk(self):
 		# return actual magic atk by combining base magic atk and weapon magic_atk
-		bonus = 0
-		if equipment.weapon:
-			bonus = sum(equipment.weapon.magic_atk for equipment in get_all_equiped(self.owner))
-		bonus = bonus + cls.stat_modifier()
-		return self.base_magic.atk + bonus
+		bonus = sum(equipment.weapon.magic_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
+		if bonus: return bonus + self.base_magic.bns
+		return self.base_magic.atk
 
 	@property
 	def max_hp(self): # return actual max_hp by summing base max hp to all bonuses
 		bonus = sum(equipment.max_hp_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_max_hp + bonus
-
-	@property
-	def defense(self):
-		# return actual defense by summing base defense to all bonuses
-		bonus = sum(equipment.defense_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_defense + bonus
+		if bonus: return self.base_max_hp + bonus
+		return self.base_max_hp
 
 	@property
 	def max_stamina(self): # return actual stamina by summing base stamina to all bonuses
 		bonus = sum(equipment.max_stamina_bonus for equipment in get_all_equiped(self.owner))
-		return self.base_max_stamina + bonus
+		if bonus: return self.base_max_stamina + bonus
+		return self.base_max_stamina
 
 	def take_damage(cls, damage):
 		# apply damage if possible
@@ -332,7 +294,7 @@ class Fighter:
 	def attack(cls, target):
 		# simple formula to calculate damage and stamina consumption
 		(stamina_available, equip) = cls.calculate_stamina_use()
-		damage = cls.power - target.fighter.defense
+		damage = cls.calculate_damage(target)
 		if stamina_available < 0:
 			message('You try to attack but are too exhausted...', libtcod.red)
 		elif damage <= 0:
@@ -346,7 +308,7 @@ class Fighter:
 
 	def monster_attack(cls, target):
 		# basic monster attack
-		damage = cls.power - target.fighter.defense
+		damage = cls.calculate_damage(target)
 		if damage > 0:
 			message(cls.owner.name.capitalize() + ' attacks ' + target.name
 					+ ' for ' + str(damage) + ' hit points.')
@@ -366,14 +328,14 @@ class Fighter:
 		modifier = constants.MONSTER_PRE_MOD[modifier_name]
 		cls.base_max_hp = cls.base_max_hp + int(round(cls.base_max_hp * modifier))
 		cls.hp = cls.base_max_hp
-		cls.base_power = cls.base_power + int(round(cls.base_power * modifier))
-		cls.base_defense = cls.base_defense + int(round(cls.base_defense * modifier))
+		cls.base_power = cls.base_phys.atk + int(round(cls.base_phys.atk * modifier))
+		cls.base_defense = cls.base_phys.defs + int(round(cls.base_phys.defs * modifier))
 		cls.souls = cls.souls + int(round(cls.souls * modifier))
 
 	def calculate_stamina_use(cls):
 		# Calculate equipment stamina usage
-		equip_dummy = Equipment('main hand', power_bonus=0, stamina_usage=1)
-		equiped = equip_dummy.get_equiped_in_slot('main hand')
+		equip_fist = Equipment('main hand', power_bonus=0, stamina_usage=1)
+		equiped = equip_fist.get_equiped_in_slot('main hand')
 
 		if equiped is not None:
 			stamina_available = player.fighter.stamina \
@@ -381,11 +343,44 @@ class Fighter:
 			return (stamina_available, equiped)
 		else:
 			stamina_available = player.fighter.stamina \
-								- equip_dummy.stamina_usage
-			return (stamina_available, equip_dummy)
+								- equip_fist.stamina_usage
+			return (stamina_available, equip_fist)
 
-	def stat_modifier(cls):
-		return 1
+	def calculate_damage(cls, target):
+		# Calculates damage dealt using atk/defs types
+		overall_damage = 0
+		phys = cls.phys_atk - target.fighter.phys_def
+		if phys > 0:
+			overall_damage += phys
+		fire = cls.fire_atk - target.fighter.fire_def
+		if fire > 0:
+			overall_damage += fire
+		lightning = cls.lightning_atk - target.fighter.lightning_def
+		if lightning > 0:
+			overall_damage += lightning
+		magic = cls.magic_atk - target.fighter.magic_def
+		if magic > 0:
+			overall_damage += magic
+
+		return overall_damage
+
+class Combat:
+
+	base_bonus = 10
+
+	# Attack and defense stats of any type
+	def __init__(self, atk, defs, stat=0):
+		self.atk = atk
+		self.defs = defs
+		self.stat = stat # Updated when player levels up
+
+	@property
+	def bns(cls):
+		# Formula to calculate stat bonus aplied to different atk types
+		if cls.stat % 2 == 0:
+			return base_bonus + cls.stat/2
+		else:
+			0
 
 
 class BasicMonster:
@@ -511,10 +506,12 @@ class Equipment:
 		if infusion in constants.INFUSIONS: # current infusion
 			self.infusion = infusion
 		self.requirements = requirements # equipment stat requirements
-		if weapon is not None: # is weapon?
-			self.weapon = weapon
-		if armor is not None: # is armor?
-			self.armor = armor
+		self.weapon = weapon
+		if weapon: # is weapon?
+			self.weapon.owner = self
+		self.armor = armor
+		if armor: # is armor?
+			self.armor.owner = self
 
 	def toggle_equip(cls): # toggle equip/dequip status
 		if cls.is_equiped:
