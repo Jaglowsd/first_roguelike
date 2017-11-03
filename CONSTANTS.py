@@ -97,6 +97,12 @@ color_dark_ground = libtcod.darker_grey
 color_light_wall = libtcod.sepia
 color_light_ground = libtcod.grey
 
+# Infusion list
+INFUSIONS = {0: 'fire', 1: 'lightning', 2: 'magic'}
+
+# Requirements default
+REQUIREMENTS_DEF = [0, 0, 0]
+
 # Item class drop chances
 COMMON = 60
 UNCOMMON = 30
