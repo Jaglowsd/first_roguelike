@@ -183,7 +183,7 @@ class Fighter:
 		if modifier is not None: # Apply any name base stat modifiers
 			self.apply_modifier(modifier)
 
-	# Strength, Dexterity, and Intelligence
+	# Strength, Dexterity, and Intelligence #
 	@property
 	def str(self):
 		# return actual strength by summing base strength to all bonuses
