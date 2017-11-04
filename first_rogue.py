@@ -1237,13 +1237,17 @@ def handle_keys():
 					   + str(player.fighter.souls) + '\nSouls to level up: '
 					   + str(level_up_souls) + '\n\nHitpoints: '
 					   + str(player.fighter.max_hp) + '\nStamina: '
-					   + str(player.fighter.max_stamina) + '\n\nPhysical Attack/Defense: '
+					   + str(player.fighter.max_stamina) 
+					   + '\n\nPhysical Attack/Defense: '
 					   + str(player.fighter.base_phys.atk) + '/'
-					   + str(player.fighter.base_phys.defs) + '\n\nFire Attack/Defense: '
+					   + str(player.fighter.base_phys.defs) 
+					   + '\n\nFire Attack/Defense: '
 					   + str(player.fighter.base_fire.atk) + '/'
-					   + str(player.fighter.base_fire.defs) + '\n\nLightning Attack/Defense: '
+					   + str(player.fighter.base_fire.defs) 
+					   + '\n\nLightning Attack/Defense: '
 					   + str(player.fighter.base_lightning.atk) + '/'
-					   + str(player.fighter.base_lightning.defs)+ '\n\nMagic Attack/Defense: '
+					   + str(player.fighter.base_lightning.defs) 
+					   + '\n\nMagic Attack/Defense: '
 					   + str(player.fighter.base_magic.atk) + '/'
 					   + str(player.fighter.base_magic.defs),
 					   constants.CHARACTER_SCREEN_WIDTH)
