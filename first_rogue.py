@@ -1235,10 +1235,17 @@ def handle_keys():
 								 + constants.LEVEL_UP_FACTOR)
 				msgbox('Stats\n\nLevel ' + str(player.level) + '\nSouls: '
 					   + str(player.fighter.souls) + '\nSouls to level up: '
-					   + str(level_up_souls) + '\n\nMaximum HP: '
-					   + str(player.fighter.max_hp) + '\nAttack: ' 
-					   + str(player.fighter.power) + '\nDefense: ' 
-					   + str(player.fighter.defense),
+					   + str(level_up_souls) + '\n\nHitpoints: '
+					   + str(player.fighter.max_hp) + '\nStamina: '
+					   + str(player.fighter.max_stamina) + '\n\nPhysical Attack/Defense: '
+					   + str(player.fighter.base_phys.atk) + '/'
+					   + str(player.fighter.base_phys.defs) + '\n\nFire Attack/Defense: '
+					   + str(player.fighter.base_fire.atk) + '/'
+					   + str(player.fighter.base_fire.defs) + '\n\nLightning Attack/Defense: '
+					   + str(player.fighter.base_lightning.atk) + '/'
+					   + str(player.fighter.base_lightning.defs)+ '\n\nMagic Attack/Defense: '
+					   + str(player.fighter.base_magic.atk) + '/'
+					   + str(player.fighter.base_magic.defs),
 					   constants.CHARACTER_SCREEN_WIDTH)
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
