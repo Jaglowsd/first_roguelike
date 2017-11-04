@@ -244,21 +244,24 @@ class Fighter:
 
 	@property
 	def fire_atk(self):
-		# return actual fire_atk by combining base fire_atk and weapon fire_atk
+		# return actual fire_atk by combining base fire_atk and weapon fire_atk and a bonus calculated using the
+		# elements corresponding base stat. Strength to fire
 		bonus = sum(equipment.weapon.fire_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
 		if bonus: return bonus + self.base_fire.bns
 		return self.base_fire.atk
 
 	@property
 	def lightning_atk(self):
-		# return actual lightning_atk by combining base lightning_atk and weapon lightning_atk
+		# return actual lightning_atk by combining base lightning_atk and weapon lightning_atk and a bonus calculated using the
+		# elements corresponding base stat. Dexterity to lightning
 		bonus = sum(equipment.weapon.lightning_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
 		if bonus: return bonus + self.base_lightning.bns
 		return self.base_lightning.atk
 
 	@property
 	def magic_atk(self):
-		# return actual magic atk by combining base magic atk and weapon magic_atk
+		# return actual magic atk by combining base magic atk and weapon magic_atk and a bonus calculated using the
+		# elements corresponding base stat. Intelligence to magic
 		bonus = sum(equipment.weapon.magic_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
 		if bonus: return bonus + self.base_magic.bns
 		return self.base_magic.atk
@@ -370,6 +373,24 @@ class Fighter:
 		cls.base_lightning.stat = cls.dex
 		cls.base_magic.stat = cls.int
 
+	def update_all_stats(cls):
+		# Update all stats except base stats after lvl up
+		cls.base_max_hp += 20
+		cls.hp = cls.max_hp
+		cls.base_max_stamina += 10
+		cls.stamina = cls.max_stamina
+		cls.base_phys.defs += 5
+		cls.base_fire.defs = cls.base_fire.defs + 5 + cls.update_defenses('base_str')
+		cls.base_lightning.defs = cls.base_lightning.defs + 5 + cls.update_defenses('base_dex')
+		cls.base_magic.defs = cls.base_magic.defs + 5 + cls.update_defenses('base_int')
+
+	def update_defenses(cls, base_stat):
+		# Return a bonus for elemental's def corresponding to the base stat
+		# (str-fire, lghting-dex, int-magic)
+		stat_value = getattr(cls, base_stat)
+		if stat_value % 2 == 0:
+			return stat_value/2
+		return 0
 
 class Combat:
 
@@ -386,8 +407,7 @@ class Combat:
 		# Formula to calculate stat bonus aplied to different atk types
 		if cls.stat % 2 == 0:
 			return base_bonus + cls.stat/2
-		else:
-			0
+		return 0
 
 
 class BasicMonster:
@@ -1673,6 +1693,7 @@ def level_up(stat_str, level_up_souls):
 	player.level += 1
 	player.fighter.souls -= level_up_souls
 	player.fighter.update_elemental_bns()
+	player.fighter.update_all_stats()
 
 ###########
 ## Menus ##
@@ -1870,6 +1891,7 @@ def new_game():
 	player = Object(0, 0, 'Player', '@', libtcod.white,
 					blocks=True, fighter=fighter_component)
 	player.level = 1
+	player.fighter.souls = 700
 
 	# initialize our map
 	dungeon_level = 1
