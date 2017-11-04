@@ -364,6 +364,13 @@ class Fighter:
 
 		return overall_damage
 
+	def update_elemental_bns(cls):
+		# Update elemental bns with most recent base stats
+		cls.base_fire.stat = cls.str
+		cls.base_lightning.stat = cls.dex
+		cls.base_magic.stat = cls.int
+
+
 class Combat:
 
 	base_bonus = 10
@@ -658,10 +665,11 @@ def make_map():
 
 			# Append new room to list.
 			rooms.append(new_room)
-			num_rooms += 1
 
-			# Place objects in the new room
-			place_objects(new_room)
+			# Place objects in the new room if its not spawn room
+			if num_rooms != 0:
+				place_objects(new_room)
+			num_rooms += 1
 
 			# Visualization of room drawing order.
 			# room_no = Object(new_x, new_y, chr(63+num_rooms), libtcod.white)
@@ -1130,46 +1138,6 @@ def get_all_equiped(obj):
 	else:
 		return [] # other objects by default do not have equipment
 
-def check_level_up():
-	# check if player has enough souls to level up
-
-	# before lvl 12 there is no accurate formula to calcualte the amount
-	# of souls needed to level up. The formula for 12 and up is found at
-	# http://darksouls.wikidot.com/soul-level
-	if player.level < 12:
-		level_up_souls = (constants.LEVEL_UP_BASE +  constants.LEVEL_UP_FACTOR)
-	else:
-		level_up_souls = (0.02 * (player.level ** 3)
-					   + 3.06 * (player.level ** 2)
-					   + 105.6 * player.level
-					   - 895)
-
-	if player.fighter.souls >= level_up_souls:
-		# level up y'all!
-		player.level += 1
-		player.fighter.souls -= level_up_souls
-		message('Your battle skills grow stronger! You reached level ' 
-				+ str(player.level) + '!', libtcod.yellow)
-		# increase hp, def, or power
-		choice = None
-		while choice is None:
-			choice = menu('Choose which stat to raise:\n',
-						  ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + '->' + str(player.fighter.max_hp + 20) + ')',
-						  'Strength (+1 Attack, from ' + str(player.fighter.power) + '->' + str(player.fighter.power + 1) + ')',
-						  'Defense (+1 Defense, from ' + str(player.fighter.defense) + '->' + str(player.fighter.defense + 1) + ')'],
-						  constants.LEVEL_SCREEN_WIDTH)
-			if choice == 0:
-				player.fighter.base_max_hp += 20
-				player.fighter.hp = player.fighter.max_hp
-			elif choice == 1:
-				player.fighter.base_power += 1
-				player.fighter.hp = player.fighter.max_hp
-			elif choice == 2:
-				player.fighter.base_defense += 1
-				player.fighter.hp = player.fighter.max_hp
-	else:
-		message("More souls required...", libtcod.red)
-
 def handle_keys():
 	# Handle key presses inputted by player.
 	global key, stairs
@@ -1219,9 +1187,11 @@ def handle_keys():
 
 			if key_chr == 'e': # pick up an item
 				for object in objects:
-					if (object.x == player.x and object.y == player.y 
+					if (object.x == player.x and object.y == player.y
 						and object.item):
 						object.item.pick_up()
+						# Armor may increase base stats
+						player.fighter.update_elemental_bns()
 						break
 			if key_chr == 'i': # open inventory menu
 				chosen_item = inventory_menu('Press the key next '
@@ -1229,6 +1199,8 @@ def handle_keys():
 											 'or any other to cancel.\n')
 				if chosen_item is not None:
 					chosen_item.use()
+					# Armor may increase base stats
+					player.fighter.update_elemental_bns()
 			if key_chr == 'd': # drop an item in the inventory
 				chosen_item = inventory_menu('Press the key next '
 											 'to the item to drop, '
@@ -1633,11 +1605,80 @@ def move_cursor(direction, cursor, y_position, options, window):
 
 	return (cursor, y_position)
 
+def check_level_up():
+	# check if player has enough souls to level up
+
+	# before lvl 12 there is no accurate formula to calculate the amount
+	# of souls needed to level up. The formula for 12 and up is found at
+	# http://darksouls.wikidot.com/soul-level
+	if player.level < 12:
+		level_up_souls = (constants.LEVEL_UP_BASE +  constants.LEVEL_UP_FACTOR)
+	else:
+		level_up_souls = (0.02 * (player.level ** 3)
+					   + 3.06 * (player.level ** 2)
+					   + 105.6 * player.level
+					   - 895)
+
+	if player.fighter.souls >= level_up_souls:
+		# increase str, dex, or int
+		choice_confirm = None
+		choice = menu('Choose which stat to raise: ENTER or KEY to choose.\n\n'
+					  'Souls ' + str(player.fighter.souls) + ' => ' + str(player.fighter.souls) + '\n\n'
+					  'Level ' + str(player.level) + ' => ' + str(player.level) + '\n',
+					  ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
+					  'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
+					  'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
+					  constants.LEVEL_SCREEN_WIDTH)
+		if choice == 0:
+			choice_confirm = \
+				menu('Choose which stat to raise: ENTER or KEY to confirm selection\n\n'
+					 'Souls ' + str(player.fighter.souls) + ' => ' + str(player.fighter.souls - level_up_souls) + '\n\n'
+					 'Level ' + str(player.level) + ' => ' + str(player.level + 1) + '\n',
+					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str + 1),
+					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
+					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
+					 constants.LEVEL_SCREEN_WIDTH, choice)
+			if choice_confirm == choice:
+				level_up("base_str", level_up_souls)
+		elif choice == 1:
+			choice_confirm = \
+				menu('Choose which stat to raise: ENTER or KEY to confirm selection\n\n'
+				 	 'Souls ' + str(player.fighter.souls) + ' => ' + str(player.fighter.souls - level_up_souls) + '\n\n'
+					 'Level ' + str(player.level) + ' => ' + str(player.level + 1) + '\n',
+					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
+					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex + 1),
+					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
+					 constants.LEVEL_SCREEN_WIDTH, choice)
+			if choice_confirm == choice:
+				level_up("base_dex", level_up_souls)
+		elif choice == 2:
+			choice_confirm = \
+				menu('Choose which stat to raise: ENTER or KEY to confirm selection\n\n'
+				     'Souls ' + str(player.fighter.souls) + ' => ' + str(player.fighter.souls - level_up_souls) + '\n\n'
+					 'Level ' + str(player.level) + ' => ' + str(player.level + 1) + '\n',
+					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
+					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
+					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int + 1)],
+					 constants.LEVEL_SCREEN_WIDTH, choice)
+			if choice_confirm == choice:
+				level_up("base_int", level_up_souls)
+	else:
+		message("More souls required...", libtcod.red)
+
+def level_up(stat_str, level_up_souls):
+	# Increase player stats and deduct souls lvl requirement
+	value = getattr(player.fighter, stat_str) + 1
+	if value:
+		setattr(player.fighter, stat_str, value)
+	player.level += 1
+	player.fighter.souls -= level_up_souls
+	player.fighter.update_elemental_bns()
+
 ###########
 ## Menus ##
 ###########
 
-def menu(header, options, width):
+def menu(header, options, width, previous_cursor=0):
 	global key, mouse
 	# currently limited to 26 options because we allow at most chars A-Z
 	if len(options) > 26:
@@ -1650,6 +1691,11 @@ def menu(header, options, width):
 	if header == '':
 		header_height = 0
 	height = len(options) + header_height
+
+	# If menu needs to be redrawn after seletion, preserve the cursor's position
+	y_position = header_height
+	if previous_cursor:
+		y_position = header_height + previous_cursor
 
 	# create an off-screen console that represents the menu's window
 	window = libtcod.console_new(width, height)
@@ -1664,7 +1710,7 @@ def menu(header, options, width):
 	letter_index = ord('a')
 	for option_text in options:
 		text = '(' + chr(letter_index) + ')' + option_text
-		if y == header_height:
+		if y == y_position:
 			libtcod.console_set_default_foreground(window, libtcod.yellow)
 		libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
 								 libtcod.LEFT, text)
@@ -1673,8 +1719,7 @@ def menu(header, options, width):
 		letter_index += 1
 
 	# cursor position
-	cursor = 0
-	y_position = header_height
+	cursor = previous_cursor
 
 	# blit the contents of 'window' to the root console
 	x = constants.CAMERA_WIDTH/2
@@ -1702,14 +1747,16 @@ def menu(header, options, width):
 				libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.0)
 				libtcod.console_flush()
 		elif key.vk == libtcod.KEY_ENTER:
+			if game_state != 'main menu':
+				render_all()
+				render_gui()
 			return cursor
 		else:
 			waiting = False
 
-	# When waiting for layered menu, make the background one more transparent
-	libtcod.console_clear(window)
-	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
-	libtcod.console_flush()
+	if game_state != 'main menu':
+		render_all()
+		render_gui()
 
 	# convert ASCII code to an index, if it corresponds to an option return it
 	index = key.c - ord('a')
@@ -1757,8 +1804,13 @@ def bonfire_menu():
 
 def main_menu():
 	# main menu of game
+	global game_state
+
+	# Current game state is main menu
+	game_state = 'main menu'
+
 	img = libtcod.image_load('menu_background.png')
-	
+
 	while not libtcod.console_is_window_closed():
 		# show the background image, at twice the regular console resolution
 		libtcod.image_blit_2x(img, 0, 0, 0)
@@ -1809,7 +1861,7 @@ def msgbox(text, width=50):
 
 def new_game():
 	# pieces needed to start a new game
-	global player, inventory, game_msgs, game_state, dungeon_level
+	global player, inventory, game_msgs, dungeon_level
 	global estus_flask, estus_flask_max, hotkeys
 	
 	# initialize player object
@@ -1823,9 +1875,6 @@ def new_game():
 	dungeon_level = 1
 	make_map()
 	initialize_fov()
-	
-	# keep track of player state
-	game_state = 'playing'
 	
 	# player inventory, list of objects
 	inventory = []
@@ -1860,7 +1909,7 @@ def new_game():
 
 def load_game():
 	# load shelved game
-	global map, objects, inventory, player, game_msgs, game_state
+	global map, objects, inventory, player, game_msgs, game_state, bonfire
 	global stairs, dungeon_level, estus_flask, estus_flask_max, hotkeys
 
 	file = shelve.open('savegame.sav', 'r')
@@ -1875,6 +1924,7 @@ def load_game():
 	estus_flask = inventory[file['estus_index']]
 	estus_flask_max = file['estus_max']
 	hotkeys = file['hotkeys']
+	bonfire = objects[file['bonfire_index']]
 	file.close()
 	
 	initialize_fov()
@@ -1896,6 +1946,7 @@ def save_game():
 	file['estus_index'] = inventory.index(estus_flask)
 	file['estus_max'] = estus_flask_max
 	file['hotkeys'] = hotkeys
+	file['bonfire_index'] = objects.index(bonfire)
 	file.close()
 
 	clear_consoles()
@@ -1965,10 +2016,13 @@ def next_level():
 	initialize_fov()
 
 def play_game():
-	global key, mouse, fov_torchx, camera_x, camera_y
-	
+	global key, mouse, fov_torchx, camera_x, camera_y, game_state, game_state
+
 	player_action = None
-	
+
+	# keep track of player state
+	game_state = 'playing'
+
 	fov_torchx = 0.0
 
 	# mouse and keyboard information
@@ -2003,6 +2057,7 @@ def play_game():
 		# Handle keys and exit game if needed.	
 		player_action = handle_keys()
 		if player_action == 'exit':
+			game_state = 'main menu'
 			save_game()
 			break
 
