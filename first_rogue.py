@@ -1234,7 +1234,7 @@ def handle_keys():
 				level_up_souls = (constants.LEVEL_UP_BASE
 								 + constants.LEVEL_UP_FACTOR)
 				msgbox('Stats\n\nLevel ' + str(player.level) + '\nSouls: '
-					   + str(player.fighter.souls) + '\nSouls to level up: '
+					   + str(player.fighter.souls) + '\nSouls for level: '
 					   + str(level_up_souls) + '\n\nHitpoints: '
 					   + str(player.fighter.max_hp) + '\nStamina: '
 					   + str(player.fighter.max_stamina) 
@@ -1627,11 +1627,11 @@ def move_cursor(direction, cursor, y_position, options, window):
 	# Unhighlight the current cursor's position text, increment/decrement
 	# cursor and y_position, highlight new cursor location.
 	# Return the cursor and y_position's new values
-	for index in range(len('( )' + options[cursor])):
+	for index in range(1, len('( )' + options[cursor]) + 1):
 		libtcod.console_set_char_foreground(window, index, y_position, libtcod.white)
 	cursor += direction
 	y_position += direction
-	for index in range(len('( )' + options[cursor])):
+	for index in range(1, len('( )' + options[cursor]) + 1):
 		libtcod.console_set_char_foreground(window, index, y_position, libtcod.yellow)
 
 	return (cursor, y_position)
@@ -1668,7 +1668,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str + 1),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
-					 constants.LEVEL_SCREEN_WIDTH, choice)
+					 constants.LEVEL_SCREEN_WIDTH, choice+1)
 			if choice_confirm == choice:
 				level_up("base_str", level_up_souls)
 		elif choice == 1:
@@ -1679,7 +1679,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex + 1),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
-					 constants.LEVEL_SCREEN_WIDTH, choice)
+					 constants.LEVEL_SCREEN_WIDTH, choice+1)
 			if choice_confirm == choice:
 				level_up("base_dex", level_up_souls)
 		elif choice == 2:
@@ -1690,7 +1690,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int + 1)],
-					 constants.LEVEL_SCREEN_WIDTH, choice)
+					 constants.LEVEL_SCREEN_WIDTH, choice+1)
 			if choice_confirm == choice:
 				level_up("base_int", level_up_souls)
 	else:
@@ -1717,39 +1717,44 @@ def menu(header, options, width, previous_cursor=0):
 		raise ValueError('Cannot have a menu with more than 26 options.')
 
 	# calculate total height for the header (after auto wrap) and 1 line/option
-	header_height = libtcod.console_get_height_rect(con, 0, 0, width,
+	header_height = libtcod.console_get_height_rect(con, 0, 0, width-2,
 													constants.SCREEN_HEIGHT,
 													header)
 	if header == '':
 		header_height = 0
-	height = len(options) + header_height
+	height = len(options) + header_height + 2
 
 	# If menu needs to be redrawn after seletion, preserve the cursor's position
-	y_position = header_height
+	y_position = header_height + 1
 	if previous_cursor:
 		y_position = header_height + previous_cursor
 
 	# create an off-screen console that represents the menu's window
 	window = libtcod.console_new(width, height)
 
-	# print the header, with auto-wrap
+	# print the header with auto-wrap
 	libtcod.console_set_default_foreground(window, libtcod.white)
-	libtcod.console_print_rect_ex(window, 0, 0, width, height,
+	libtcod.console_print_rect_ex(window, 1, 1, width, height,
 								  libtcod.BKGND_NONE, libtcod.LEFT, header)
 
 	# print all the options
-	y = header_height
+	y = header_height + 1
 	letter_index = ord('a')
 	for option_text in options:
 		text = '(' + chr(letter_index) + ')' + option_text
 		if y == y_position:
 			libtcod.console_set_default_foreground(window, libtcod.yellow)
-		libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
+		libtcod.console_print_ex(window, 1, y, libtcod.BKGND_NONE,
 								 libtcod.LEFT, text)
 		libtcod.console_set_default_foreground(window, libtcod.white)
 		y += 1
 		letter_index += 1
 
+	window_height = libtcod.console_get_height(window)
+	libtcod.console_print_frame(window, 0, 0, width
+                                ,height, False,
+								libtcod.BKGND_NONE, None)
+	# print window_height
 	# cursor position
 	cursor = previous_cursor
 
