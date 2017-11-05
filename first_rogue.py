@@ -1233,11 +1233,14 @@ def handle_keys():
 			if key_chr == 's': # check character information
 				level_up_souls = (constants.LEVEL_UP_BASE
 								 + constants.LEVEL_UP_FACTOR)
-				msgbox('Stats\n\nLevel ' + str(player.level) + '\nSouls: '
+				msgbox('Level ' + str(player.level) + '\nSouls: '
 					   + str(player.fighter.souls) + '\nSouls for level: '
 					   + str(level_up_souls) + '\n\nHitpoints: '
 					   + str(player.fighter.max_hp) + '\nStamina: '
-					   + str(player.fighter.max_stamina) 
+					   + str(player.fighter.max_stamina) + '\nStrength: '
+					   + str(player.fighter.str) + '\nDexterity: '
+					   + str(player.fighter.dex) + '\nIntelligence: '
+					   + str(player.fighter.int)
 					   + '\n\nPhysical Attack/Defense: '
 					   + str(player.fighter.base_phys.atk) + '/'
 					   + str(player.fighter.base_phys.defs) 
@@ -1250,7 +1253,7 @@ def handle_keys():
 					   + '\n\nMagic Attack/Defense: '
 					   + str(player.fighter.base_magic.atk) + '/'
 					   + str(player.fighter.base_magic.defs),
-					   constants.CHARACTER_SCREEN_WIDTH)
+					   constants.CHARACTER_SCREEN_WIDTH, 'Stats')
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
 						'\nDrop item: d\nPick up/loot: e\nCharacter stats: c\n'
@@ -1659,7 +1662,7 @@ def check_level_up():
 					  ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
 					  'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
 					  'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
-					  constants.LEVEL_SCREEN_WIDTH)
+					  constants.LEVEL_SCREEN_WIDTH, 0, 'Level Up')
 		if choice == 0:
 			choice_confirm = \
 				menu('Choose which stat to raise: ENTER or KEY to confirm selection\n\n'
@@ -1668,7 +1671,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str + 1),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
-					 constants.LEVEL_SCREEN_WIDTH, choice+1)
+					 constants.LEVEL_SCREEN_WIDTH, choice, 'Level Up')
 			if choice_confirm == choice:
 				level_up("base_str", level_up_souls)
 		elif choice == 1:
@@ -1679,7 +1682,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex + 1),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int)],
-					 constants.LEVEL_SCREEN_WIDTH, choice+1)
+					 constants.LEVEL_SCREEN_WIDTH, choice, 'Level Up')
 			if choice_confirm == choice:
 				level_up("base_dex", level_up_souls)
 		elif choice == 2:
@@ -1690,7 +1693,7 @@ def check_level_up():
 					 ['Strength ' + str(player.fighter.str) + ' => '  + str(player.fighter.str),
 					 'Dexterity ' + str(player.fighter.dex) + ' => '  + str(player.fighter.dex),
 					 'Intelligence ' + str(player.fighter.int) + ' => '  + str(player.fighter.int + 1)],
-					 constants.LEVEL_SCREEN_WIDTH, choice+1)
+					 constants.LEVEL_SCREEN_WIDTH, choice, 'Level Up')
 			if choice_confirm == choice:
 				level_up("base_int", level_up_souls)
 	else:
@@ -1710,7 +1713,7 @@ def level_up(stat_str, level_up_souls):
 ## Menus ##
 ###########
 
-def menu(header, options, width, previous_cursor=0):
+def menu(header, options, width, previous_cursor=0, title=None):
 	global key, mouse
 	# currently limited to 26 options because we allow at most chars A-Z
 	if len(options) > 26:
@@ -1727,7 +1730,7 @@ def menu(header, options, width, previous_cursor=0):
 	# If menu needs to be redrawn after seletion, preserve the cursor's position
 	y_position = header_height + 1
 	if previous_cursor:
-		y_position = header_height + previous_cursor
+		y_position += previous_cursor
 
 	# create an off-screen console that represents the menu's window
 	window = libtcod.console_new(width, height)
@@ -1750,11 +1753,12 @@ def menu(header, options, width, previous_cursor=0):
 		y += 1
 		letter_index += 1
 
-	window_height = libtcod.console_get_height(window)
-	libtcod.console_print_frame(window, 0, 0, width
-                                ,height, False,
-								libtcod.BKGND_NONE, None)
-	# print window_height
+	# Print frame around window
+	libtcod.console_set_default_foreground(window, libtcod.darker_sepia)
+	libtcod.console_set_default_background(window, libtcod.yellow)
+	libtcod.console_print_frame(window, 0, 0, width ,height, False,
+								libtcod.BKGND_NONE, title)
+
 	# cursor position
 	cursor = previous_cursor
 
@@ -1817,7 +1821,7 @@ def inventory_menu(header):
 				text += ' (' + item.equipment.slot + ')'
 			options.append(text)
 
-	index = menu(header, options, constants.INVENTORY_WIDTH)
+	index = menu(header, options, constants.INVENTORY_WIDTH, 0, 'Inventory')
 
 	# if an item was chosen, return it
 	if index is None or len(inventory) == 0:
@@ -1831,7 +1835,8 @@ def bonfire_menu():
 	restore_player()
 
 	# Build the options for this menu
-	choice = menu('', [' Level up', ' Cancel'], constants.BONFIRE_WIDTH)
+	choice = menu('', [' Level up', ' Cancel'], constants.BONFIRE_WIDTH, 0,
+				  'Bonfire')
 
 	if choice == 0: # level up
 		# Check if player has enough souls to level up
@@ -1893,8 +1898,8 @@ def message(new_msg, color=libtcod.white):
 		# add the new line as a tuple, with text and color.
 		game_msgs.append( (line, color) )
 
-def msgbox(text, width=50):
-	menu(text, [], width) # use menu() as a sort of 'message box'
+def msgbox(text, width=50, title=None):
+	menu(text, [], width, 0, title) # use menu() as a sort of 'message box'
 
 def new_game():
 	# pieces needed to start a new game
