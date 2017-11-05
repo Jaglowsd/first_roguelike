@@ -56,7 +56,7 @@ MAX_ROOMS = 30
 # Width of menu windows
 INVENTORY_WIDTH = 50
 LEVEL_SCREEN_WIDTH = 40
-CHARACTER_SCREEN_WIDTH = 30
+CHARACTER_SCREEN_WIDTH = 40
 BONFIRE_WIDTH = 20
 
 # Estus flask usage and healing amount
