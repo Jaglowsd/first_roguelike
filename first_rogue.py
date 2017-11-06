@@ -1232,7 +1232,7 @@ def handle_keys():
 					next_level()
 			if key_chr == 's': # check character information
 				level_up_souls = (constants.LEVEL_UP_BASE
-								 + constants.LEVEL_UP_FACTOR)
+								 + (constants.LEVEL_UP_FACTOR * player.level))
 				msgbox('Level ' + str(player.level) + '\nSouls: '
 					   + str(player.fighter.souls) + '\nSouls for level: '
 					   + str(level_up_souls) + '\n\nHitpoints: '
@@ -1648,10 +1648,10 @@ def check_level_up():
 	if player.level < 12:
 		level_up_souls = (constants.LEVEL_UP_BASE +  constants.LEVEL_UP_FACTOR)
 	else:
-		level_up_souls = (0.02 * (player.level ** 3)
+		level_up_souls = int(round((0.02 * (player.level ** 3)
 					   + 3.06 * (player.level ** 2)
 					   + 105.6 * player.level
-					   - 895)
+					   - 895)))
 
 	if player.fighter.souls >= level_up_souls:
 		# increase str, dex, or int
@@ -1912,7 +1912,6 @@ def new_game():
 	player = Object(0, 0, 'Player', '@', libtcod.white,
 					blocks=True, fighter=fighter_component)
 	player.level = 1
-	player.fighter.souls = 700
 
 	# initialize our map
 	dungeon_level = 1
