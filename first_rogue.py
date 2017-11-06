@@ -159,6 +159,19 @@ class Object:
 			libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_NONE)
 
 
+class Rating:
+	# Stats bonus towards weapon attack
+	def __init__(self, rating_per_level, base_rating, rating, stat_level):
+		self.rating_per_level = rating_per_level
+		self.base_rating = base_rating
+		self.rating = rating
+		self.stat_level = stat_level
+
+	def calc_bonus(cls):
+		# return stat bonus
+		return cls.base_rating + cls.stat_level * cls.rating_per_level
+
+
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
 	def __init__(self, hp, defense, power, stamina, souls, death_function=None,
@@ -168,8 +181,11 @@ class Fighter:
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_str = str # Strength
+		self.str_bonus = Rating(0.05, 0.0, 0.0) # Strength bonus
 		self.base_dex = dex # Dexterity
+		self.dex_bonus = Rating(0.05, 0.0, 0.0) # Dexterity bonus
 		self.base_int = int # Intelligence
+		self.int_bonus = Rating(0.05, 0.0, 0.0) # Intelligence bonus
 		self.base_phys = Combat(phys_atk, phys_def, 0) # phys atk/def
 		self.base_fire = Combat(fire_atk, fire_def, self.base_str) # fire atk/def
 		self.base_lightning = Combat(lightning_atk, lightning_def, self.base_dex) # lgthning atk/def
@@ -189,7 +205,7 @@ class Fighter:
 		# return actual strength by summing base strength to all bonuses
 		bonus = sum(equipment.armor.str_bonus for equipment in get_all_equiped(self.owner) if equipment.armor)
 		if bonus: return self.base_str + bonus
-		return self.base_str
+		return self.base_str		
 
 	@property
 	def dex(self):
@@ -238,8 +254,12 @@ class Fighter:
 	@property
 	def phys_atk(self):
 		# return actual phys atk by combining base phys atk and weapon phys_atk
-		bonus = sum(equipment.weapon.phys_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
-		if bonus: return self.base_phys.atk + bonus
+		# bonus = sum(equipment.weapon.phys_atk for equipment in get_all_equiped(self.owner) if equipment.weapon)
+		equip = get_equiped_in_slot('main hand')
+		if equip:
+			scaling_stat = equip.weapon.scaling[0]
+		and equip.weapon:
+			return self.base_phys.atk * equip.weapon.phys_atk
 		return self.base_phys.atk
 
 	@property
@@ -325,7 +345,7 @@ class Fighter:
 		cls.hp += amount
 		if cls.hp > cls.max_hp:
 			cls.hp = cls.max_hp
-			
+
 	def apply_modifier(cls, modifier_name):
 		# mutate the base stats of monster based on their affix modifier
 		modifier = constants.MONSTER_PRE_MOD[modifier_name]
@@ -338,7 +358,7 @@ class Fighter:
 	def calculate_stamina_use(cls):
 		# Calculate equipment stamina usage
 		equip_fist = Equipment('main hand', power_bonus=0, stamina_usage=1)
-		equiped = equip_fist.get_equiped_in_slot('main hand')
+		equiped = get_equiped_in_slot('main hand')
 
 		if equiped is not None:
 			stamina_available = player.fighter.stamina \
@@ -383,6 +403,10 @@ class Fighter:
 		cls.base_fire.defs = cls.base_fire.defs + 5 + cls.update_defenses('base_str')
 		cls.base_lightning.defs = cls.base_lightning.defs + 5 + cls.update_defenses('base_dex')
 		cls.base_magic.defs = cls.base_magic.defs + 5 + cls.update_defenses('base_int')
+		cls.update_rating()
+
+	def update_rating(cls):
+		return		
 
 	def update_defenses(cls, base_stat):
 		# Return a bonus for elemental's def corresponding to the base stat
@@ -490,8 +514,7 @@ class Item:
 			# special case where the item is a piece of equipment,
 			# the 'use' function toggles equip/dequip
 			equipment = cls.owner.equipment
-			if (equipment
-				and equipment.get_equiped_in_slot(equipment.slot) is None):
+			if (equipment and get_equiped_in_slot(equipment.slot) is None):
 				equipment.equip()
 
 	def drop(cls):
@@ -548,7 +571,7 @@ class Equipment:
 
 	def equip(cls):
 		# if the slot is already in use, dequip the item and equip the new one
-		old_equip = cls.get_equiped_in_slot(cls.slot)
+		old_equip = get_equiped_in_slot(cls.slot)
 		if old_equip is not None:
 			old_equip.dequip()
 
@@ -565,14 +588,6 @@ class Equipment:
 		message('Removed ' + cls.owner.name + ' from ' + cls.slot + '.',
 				libtcod.light_yellow)
 
-	def get_equiped_in_slot(cls, slot):
-		# returns the equipment in a slot, or None of it's empty
-		for obj in inventory:
-			if (obj.equipment and obj.equipment.slot == slot
-				and obj.equipment.is_equiped):
-				return obj.equipment
-		return None
-
 	def use_stamina(cls):
 		# equipment usage drains stamina
 		player.fighter.stamina -= cls.stamina_usage
@@ -582,12 +597,13 @@ class Weapon:
 	# Weapons are subsets to equipment so that
 	# we can define different attack ratings
 	def __init__(self, phys_atk=0, fire_atk=0, lightning_atk=0,
-				 magic_atk=0, poise_atk=0):
+				 magic_atk=0, poise_atk=0, scaling=0):
 		self.phys_atk = phys_atk
 		self.fire_atk = fire_atk
 		self.lightning_atk = lightning_atk
 		self.magic_atk = magic_atk
 		self.poise_atk = poise_atk
+		self.scaling = scaling
 
 
 class Armor:
@@ -1157,6 +1173,14 @@ def get_all_equiped(obj):
 		return equiped_list
 	else:
 		return [] # other objects by default do not have equipment
+		
+def get_equiped_in_slot(slot):
+	# returns the equipment in a slot, or None of it's empty
+	for obj in inventory:
+		if (obj.equipment and obj.equipment.slot == slot
+			and obj.equipment.is_equiped):
+			return obj.equipment
+	return None
 
 def handle_keys():
 	# Handle key presses inputted by player.
