@@ -31,12 +31,12 @@ def create_object(definition, x, y, i_component=None, e_component=None):
 						equipment=e_component, item=i_component, always_visible=definition[4])
 	return item_object
 
-def create_consumable(item_name, x, y):
+def create_consumable(item_name, x, y, cnt=1):
 	# create consumable item component
 	item = getattr(i_defs, item_name)
 	if item:
 		# Item component
-		item_component = Item(use_function=cast_heal, count=1)
+		item_component = Item(use_function=None, count=cnt)
 		return create_object(item, x, y, i_component=item_component)
 	return None
 
