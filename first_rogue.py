@@ -805,12 +805,16 @@ def place_objects(room):
 			choice = random_choice(item_chances)
 			if choice == 'lifegem':
 				item = item_creation.create_consumable('lifegem', x, y)
+				item.use_function = cast_heal
 			elif choice == 'lightning_spell':
 				item = item_creation.create_consumable('lightning_spell', x, y)
+				item.use_function = cast_lighting
 			elif choice == 'fireball':
 				item = item_creation.create_consumable('fireball', x, y)
+				item.use_function = cast_fireball
 			elif choice =='confuse_spell':
 				item = item_creation.create_consumable('confuse_spell', x, y)
+				item.use_function = cast_confuse
 			elif choice == 'straight_sword':
 				item = item_creation.create_equipment('straight_sword', x, y)
 			elif choice == 'dagger':
@@ -1885,14 +1889,13 @@ def new_game():
 	# test message, welcoming player to dungeon.
 	message('The warmth of the bonfire puts your mind at ease...', libtcod.flame)
 
-	# Define estus flask
+	# Make estus flask
 	estus_flask_max = constants.ESTUS_FLASK_MAX
-	item_component = Item(use_function=cast_heal, count=estus_flask_max)
-	estus_flask = Object(0, 0, 'estus flask', 'u',
-						 libtcod.orange, item=item_component)
+	estus_flask = item_creation.create_consumable('estus_flask', 0, 0,
+												  estus_flask_max)
+	estus_flask.item.use_function = cast_heal
 	inventory.append(estus_flask)
 	hotkeys.append(estus_flask)
-	estus_flask.always_visible = True
 
 	# starting equipment for player
 	dagger = item_creation.create_equipment('dagger', 0, 0)
