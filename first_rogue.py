@@ -1888,6 +1888,7 @@ def new_game():
 	# starting equipment for player
 	dagger = item_creation.create_equipment('dagger', 0, 0)
 	inventory.append(dagger)
+	hotkeys.append(dagger)
 	dagger.equipment.equip()
 
 def load_game():
