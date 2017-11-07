@@ -92,8 +92,8 @@ SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 LIMIT_FPS = 30
 
 # Color definitions
-color_dark_wall = libtcod.darker_sepia
-color_dark_ground = libtcod.darker_grey
+color_dark_wall = libtcod.darkest_sepia
+color_dark_ground = libtcod.darkest_grey
 color_light_wall = libtcod.sepia
 color_light_ground = libtcod.grey
 
