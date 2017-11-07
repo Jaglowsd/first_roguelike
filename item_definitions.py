@@ -10,6 +10,7 @@ rations = 			['rations', 'r', libtcod.sepia, '', True]
 lightning_spell = 	['Lighting spell', 'Z', libtcod.yellow, '', True]
 fireball = 			['Fireball', 'F', libtcod.orange,'', True]
 confuse_spell = 	['Confusion spell', 'C', libtcod.cyan, '', True]
+estus_flask = 		['Estus Flask', 'u', libtcod.orange, '', True]
 
 # Static equipment definitions
 	# 1. Equipment component values
