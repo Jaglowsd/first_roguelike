@@ -25,7 +25,7 @@ def item_chance():
 
 	return item_chances
 
-def create_item_object(definition, x, y, i_component=None, e_component=None):
+def create_object(definition, x, y, i_component=None, e_component=None):
 	# Returns the newly created object with all its components attached
 	item_object = Object(x, y, definition[0], definition[1], definition[2],
 						equipment=e_component, item=i_component, always_visible=definition[4])
@@ -37,28 +37,28 @@ def create_consumable(item_name, x, y):
 	if item:
 		# Item component
 		item_component = Item(use_function=cast_heal, count=1)
-		return create_item_object(item, x, y, i_component=item_component)
+		return create_object(item, x, y, i_component=item_component)
 	return None
 
 def create_equipment(equip_name, x, y):
 	# create equipment, weapon, and armor components
-	equip = getattr(i_defs, equip_name)
-	if equip:
+	definition = getattr(i_defs, equip_name)
+	if definition:
 		# Weapon component
 		weapon_comp = None
-		w_comp = equip['weapon_comp']
+		w_comp = definition['weapon_comp']
 		if w_comp:
 			weapon_comp = Weapon(phys_atk=w_comp[0], fire_atk=w_comp[1], lightning_atk=w_comp[2], magic_atk=w_comp[3], poise_atk=w_comp[4], weapon_type=w_comp[5])
 		# Armor component
 		armor_comp = None
-		a_comp = equip['armor_comp']
+		a_comp = definition['armor_comp']
 		if a_comp:
 			armor_comp = Armor(phys_def=a_comp[0], fire_def=a_comp[1], lightning_def=a_comp[2], magic_def=a_comp[3], poise_def=a_comp[4],
 							   str_bonus=a_comp[5], dex_bonus=a_comp[6], int_bonus=a_comp[7], armor_slot=a_comp[8])
 		# Equipment component
-		equip_comp = equip['equip_component']
+		equip_comp = definition['equip_component']
 		equip_component = Equipment(slot=equip_comp[0], max_hp_bonus=equip_comp[1], max_stamina_bonus=equip_comp[2], stamina_usage=equip_comp[3],
 									level=equip_comp[4], infusion=equip_comp[5], requirements=equip_comp[6], weapon=weapon_comp, armor=armor_comp)
-		return create_item_object(equip['object'], x, y, e_component=equip_component)
+		return create_object(definition['object'], x, y, e_component=equip_component)
 	return None
 
