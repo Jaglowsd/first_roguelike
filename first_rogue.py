@@ -1873,7 +1873,7 @@ def new_game():
 	hotkeys = []
 
 	# test message, welcoming player to dungeon.
-	message('The warmth of the bonfire brings you strength...', libtcod.flame)
+	message('The warmth of the bonfire puts your mind at ease...', libtcod.flame)
 
 	# Define estus flask
 	estus_flask_max = constants.ESTUS_FLASK_MAX
