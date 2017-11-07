@@ -5,6 +5,7 @@ import shelve
 import sys
 
 import CONSTANTS as constants
+import item_creation
 from rectangle_class import Rectangle
 from tile_class import Tile
 
@@ -307,7 +308,10 @@ class Fighter:
 			message(cls.owner.name.capitalize() + ' attacks ' + target.name
 					+ ' for ' + str(damage) + ' hit points.')
 			target.fighter.take_damage(damage)
-			equip.use_stamina()
+			if equip is not None:
+				equip.use_stamina()
+			else:
+				cls.fighter.stamina -= 1
 
 	def monster_attack(cls, target):
 		# basic monster attack
@@ -337,17 +341,15 @@ class Fighter:
 
 	def calculate_stamina_use(cls):
 		# Calculate equipment stamina usage
-		equip_fist = Equipment('main hand', power_bonus=0, stamina_usage=1)
-		equiped = equip_fist.get_equiped_in_slot('main hand')
+		equiped = get_equiped_in_slot('main hand')
 
 		if equiped is not None:
 			stamina_available = player.fighter.stamina \
 								- equiped.stamina_usage
 			return (stamina_available, equiped)
 		else:
-			stamina_available = player.fighter.stamina \
-								- equip_fist.stamina_usage
-			return (stamina_available, equip_fist)
+			stamina_available = player.fighter.stamina - 1
+			return (stamina_available, equiped)
 
 	def calculate_damage(cls, target):
 		# Calculates damage dealt using atk/defs types
@@ -519,13 +521,10 @@ class Item:
 
 class Equipment:
 	# objects that can be equiped to player, automatically adds item component
-	def __init__(self, slot, power_bonus=0, defense_bonus=0, max_hp_bonus=0,
-				 max_stamina_bonus=0, stamina_usage=0, level=1, infusion=None,
-				 requirements=None, weapon=None, armor=None):
+	def __init__(self, slot, max_hp_bonus, max_stamina_bonus, stamina_usage,
+				 level, infusion, requirements, weapon, armor):
 		self.slot = slot # where on the players person its equiped
 		self.is_equiped = False
-		self.power_bonus = power_bonus
-		self.defense_bonus = defense_bonus
 		self.max_hp_bonus = max_hp_bonus
 		self.max_stamina_bonus = max_stamina_bonus
 		self.stamina_usage = stamina_usage
@@ -576,33 +575,6 @@ class Equipment:
 	def use_stamina(cls):
 		# equipment usage drains stamina
 		player.fighter.stamina -= cls.stamina_usage
-
-
-class Weapon:
-	# Weapons are subsets to equipment so that
-	# we can define different attack ratings
-	def __init__(self, phys_atk=0, fire_atk=0, lightning_atk=0,
-				 magic_atk=0, poise_atk=0):
-		self.phys_atk = phys_atk
-		self.fire_atk = fire_atk
-		self.lightning_atk = lightning_atk
-		self.magic_atk = magic_atk
-		self.poise_atk = poise_atk
-
-
-class Armor:
-	# Armor is a subset to equipment so that
-	# we can define different defensive ratings
-	def __init__(self, phys_def=0, fire_def=0, lightning_def=0, magic_def=0,
-				 poise_def=0, str_bonus=0, dex_bonus=0, int_bonus=0):
-		self.phys_def = phys_def
-		self.fire_def = fire_def
-		self.lightning_def = lightning_def
-		self.magic_def = magic_def
-		self.poise_def = poise_def
-		self.str_bonus = str_bonus
-		self.dex_bonus = dex_bonus
-		self.int_bonus = int_bonus
 
 
 ##########################
@@ -740,7 +712,7 @@ def create_v_tunnel(y1, y2, x):
 
 def place_objects(room):
 	# place objects on map
-	global monster_prefix
+	global monster_prefix, item_creation
 	
 	# maximum number of monsters per room, floor dependent
 	max_monsters = from_dungeon_level([[2, 1, constants.END_LEVEL],
@@ -805,14 +777,17 @@ def place_objects(room):
 									[5, 6, constants.END_LEVEL]])
 	# choose random number of items to spawn
 	num_items = libtcod.random_get_int(0, 0, max_items)
+	# Initialize some variables for item creation to work
+	item_creation.Object = Object
+	item_creation.Item = Item
+	item_creation.Equipment = Equipment
+	item_creation.cast_heal = cast_heal
+	item_creation.cast_lighting = cast_lighting
+	item_creation.cast_fireball = cast_fireball
+	item_creation.cast_confuse = cast_confuse
+	item_creation.dungeon_level = dungeon_level
 	# dictionary of items and there chances of spawn
-	item_chances = {}
-	item_chances['lifegem'] = 25 # heal spawn is floor independent
-	item_chances['confuse'] = from_dungeon_level([[10, 2, constants.END_LEVEL]])
-	item_chances['lighting'] = from_dungeon_level([[25, 4, constants.END_LEVEL]])
-	item_chances['fire'] = from_dungeon_level([[25, 6, constants.END_LEVEL]])
-	item_chances['sword'] = from_dungeon_level([[5, 4, constants.END_LEVEL]])
-	item_chances['shield'] = from_dungeon_level([[15, 8, constants.END_LEVEL]])
+	item_chances = item_creation.item_chance()
 	
 	for i in range(num_items):
 		# choose random spot for items
@@ -823,39 +798,23 @@ def place_objects(room):
 			# create a chance for item to spawn
 			choice = random_choice(item_chances)
 			if choice == 'lifegem':
-				# lifegem (70% chance)
-				item_component = Item(use_function=cast_heal)
-				item = Object(x, y, 'lifegem', '!', libtcod.light_yellow,
-							  item=item_component, always_visible=True)
-			elif choice == 'lighting':
-				# create a lighting spell (10% chance)
-				item_component = Item(use_function=cast_lighting)
-				item = Object(x, y, 'Lighting spell', 'Z', libtcod.yellow,
-							  item=item_component, always_visible=True)
-			elif choice == 'fire':
-				# create a fireball spell (10% chance)
-				item_component = Item(use_function=cast_fireball)
-				item = Object(x, y, 'Fireball scroll', 'F', libtcod.orange,
-							  item=item_component, always_visible=True)
-			elif choice =='confuse':
-				# create a confusion spell (10% chance)
-				item_component = Item(use_function=cast_confuse)
-				item = Object(x, y, 'Confusion spell scroll', 'C', libtcod.cyan,
-							  item=item_component, always_visible=True)
-			elif choice == 'sword':
-				# sword (5% chance from floor 4 onwards)
-				equip_component = Equipment(slot='main hand', power_bonus=3,
-											stamina_usage=3)
-				item = Object(x, y, 'Beast Slayer', '/', libtcod.sky,
-							  equipment=equip_component)
-			elif choice == 'shield':
-				# shield (15% chance floor 8 onwards)
-				equip_component = Equipment(slot='off hand', defense_bonus=1)
-				item = Object(x, y, 'Shield', '[', libtcod.darker_orange,
-							  equipment=equip_component)
+				item = item_creation.create_consumable('lifegem', x, y)
+			elif choice == 'lightning_spell':
+				item = item_creation.create_consumable('lightning_spell', x, y)
+			elif choice == 'fireball':
+				item = item_creation.create_consumable('fireball', x, y)
+			elif choice =='confuse_spell':
+				item = item_creation.create_consumable('confuse_spell', x, y)
+			elif choice == 'straight_sword':
+				item = item_creation.create_equipment('straight_sword', x, y)
+			elif choice == 'dagger':
+				item = item_creation.create_equipment('dagger', x, y)
 
-			objects.append(item)
-			item.send_to_front() # item appear below other objects.
+			if item:
+				objects.append(item)
+				item.send_to_front() # item appear below other objects.
+			else:
+				msgbox('Something went wrong with item creation.\n', 30)
 
 def from_dungeon_level(table):
 	# returns value depending on dungeon level. The table specifies what
@@ -1026,23 +985,16 @@ def loot_drop(monster):
 	item = None
 	if type == constants.ORC:
 		if choice == constants.ORA:
-			equip_component = Equipment(slot='main hand',
-										power_bonus=3, stamina_usage=3)
-			item = Object(monster.x, monster.y, constants.ORA, 'R',
-						  libtcod.light_green, equipment=equip_component)
+			item = item_creation.create_equipment('orcs_right_arm', monster.x,
+												  monster.y)
 		elif choice == constants.RATIONS:
-			item_component = Item(use_function=cast_heal)
-			item = Object(monster.x, monster.y, constants.RATIONS, 'x',
-						  libtcod.sepia, item=item_component,
-						  always_visible=True)
+			item = item_creation.create_consumable('rations', monster.x,
+												  monster.y)
 		elif choice == constants.GOLD:
 			message('5 gold was dropped by the orc', libtcod.gold)
 	elif type == constants.TROLL:
 		if choice == constants.CLUB:
-			equip_component = Equipment(slot='main hand', power_bonus=5,
-										stamina_usage=5)
-			item = Object(monster.x, monster.y, constants.CLUB, 'P',
-						  libtcod.brown, equipment=equip_component)
+			item = item_creation.create_equipment('club', monster.x, monster.y)
 		elif choice == constants.GOLD:
 			message('8 gold was dropped by the troll', libtcod.gold)
 	if item:
@@ -1158,6 +1110,14 @@ def get_all_equiped(obj):
 	else:
 		return [] # other objects by default do not have equipment
 
+def get_equiped_in_slot(slot):
+	# returns the equipment in a slot, or None of it's empty
+	for obj in inventory:
+		if (obj.equipment and obj.equipment.slot == slot
+			and obj.equipment.is_equiped):
+			return obj.equipment
+	return None
+
 def handle_keys():
 	# Handle key presses inputted by player.
 	global key, stairs
@@ -1242,17 +1202,17 @@ def handle_keys():
 					   + str(player.fighter.dex) + '\nIntelligence: '
 					   + str(player.fighter.int)
 					   + '\n\nPhysical Attack/Defense: '
-					   + str(player.fighter.base_phys.atk) + '/'
-					   + str(player.fighter.base_phys.defs) 
+					   + str(player.fighter.phys_atk) + '/'
+					   + str(player.fighter.phys_def)
 					   + '\n\nFire Attack/Defense: '
-					   + str(player.fighter.base_fire.atk) + '/'
-					   + str(player.fighter.base_fire.defs) 
+					   + str(player.fighter.fire_atk) + '/'
+					   + str(player.fighter.fire_def)
 					   + '\n\nLightning Attack/Defense: '
-					   + str(player.fighter.base_lightning.atk) + '/'
-					   + str(player.fighter.base_lightning.defs) 
+					   + str(player.fighter.lightning_atk) + '/'
+					   + str(player.fighter.lightning_def)
 					   + '\n\nMagic Attack/Defense: '
-					   + str(player.fighter.base_magic.atk) + '/'
-					   + str(player.fighter.base_magic.defs),
+					   + str(player.fighter.magic_atk) + '/'
+					   + str(player.fighter.magic_def),
 					   constants.CHARACTER_SCREEN_WIDTH, 'Stats')
 			if key_chr == '/': # player controls
 				text = ('Controls - Any key to cancel\n\nInventory: i'
@@ -1382,7 +1342,7 @@ def render_gui():
 	libtcod.console_clear(msg_panel)
 
 	# Render frame around panel
-	libtcod.console_set_default_foreground(msg_panel, libtcod.silver)
+	libtcod.console_set_default_foreground(msg_panel, libtcod.white)
 	libtcod.console_print_frame(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
                                 constants.MSG_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
@@ -1408,10 +1368,10 @@ def render_gui():
 	libtcod.console_clear(stats_panel)
 
 	# Render frame around panel
-	libtcod.console_set_default_foreground(stats_panel, libtcod.silver)
+	libtcod.console_set_default_foreground(stats_panel, libtcod.white)
 	libtcod.console_print_frame(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
                                 constants.STATS_PANEL_HEIGHT, False,
-								libtcod.BKGND_NONE, None)
+								libtcod.BKGND_NONE, 'Stats')
 
 	# show player stats
 	render_bar(1, 2, constants.BAR_WIDTH, 'HP', player.fighter.hp,
@@ -1440,37 +1400,22 @@ def render_gui():
 	libtcod.console_clear(hotkey_panel)
 
 	# Render frame around panel
-	libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
+	libtcod.console_set_default_foreground(hotkey_panel, libtcod.white)
 	libtcod.console_print_frame(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH
                                 ,constants.HOTKEY_PANEL_HEIGHT, False,
-								libtcod.BKGND_NONE, None)
+								libtcod.BKGND_NONE, 'Hotkeys')
 
 	i = 1
 	for item in hotkeys:
 		libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
-		libtcod.console_print_ex(hotkey_panel, 1, (i*2)-1, libtcod.BKGND_NONE,
+		libtcod.console_print_ex(hotkey_panel, 1, (i*2), libtcod.BKGND_NONE,
 								libtcod.LEFT, str(i) + '>>')
 		libtcod.console_set_default_foreground(hotkey_panel, item.color)
-		libtcod.console_print_ex(hotkey_panel, 5, (i*2)-1, libtcod.BKGND_NONE,
+		libtcod.console_print_ex(hotkey_panel, 5, (i*2), libtcod.BKGND_NONE,
 								libtcod.LEFT, item.name)
 		libtcod.console_set_default_foreground(hotkey_panel, libtcod.silver)
-		libtcod.console_hline(hotkey_panel, 1, i*2, constants.HOTKEY_PANEL_WIDTH - 5)
+		libtcod.console_hline(hotkey_panel, 1, i*2+1, constants.HOTKEY_PANEL_WIDTH - 5)
 		i += 1
-
-	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-3, 10, 7
-                                # ,6, False,
-								# libtcod.BKGND_NONE, None)
-	# libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-2, 11, libtcod.BKGND_NONE,
-							 # libtcod.LEFT, 'Estus\nFlask')
-	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-9, 16, 6
-                                # ,6, False,
-								# libtcod.BKGND_NONE, None)
-	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2+3, 16, 6
-                                # ,6, False,
-								# libtcod.BKGND_NONE, None)
-	# libtcod.console_print_frame(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2-3, 22, 6
-                                # ,6, False,
-								# libtcod.BKGND_NONE, None)
 
 	# display current dungeon level to player
 	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
@@ -1941,13 +1886,14 @@ def new_game():
 	estus_flask.always_visible = True
 
 	# starting equipment for player
-	equip_component = Equipment(slot='main hand', power_bonus=2,
-								stamina_usage=2)
-	dagger = Object(0, 0, 'dagger', '-',
-					libtcod.sky, equipment=equip_component)
+	dagger = item_creation.create_equipment('dagger', 0, 0)
+	# equip_component = Equipment(slot='main hand', power_bonus=2,
+								# stamina_usage=2)
+	# dagger = Object(0, 0, 'dagger', '-',
+					# libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
-	equip_component.equip()
-	dagger.always_visible = True
+	# dagger.equipment.equip()
+	# dagger.always_visible = True
 
 def load_game():
 	# load shelved game
