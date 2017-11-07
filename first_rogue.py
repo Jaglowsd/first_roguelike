@@ -1887,13 +1887,8 @@ def new_game():
 
 	# starting equipment for player
 	dagger = item_creation.create_equipment('dagger', 0, 0)
-	# equip_component = Equipment(slot='main hand', power_bonus=2,
-								# stamina_usage=2)
-	# dagger = Object(0, 0, 'dagger', '-',
-					# libtcod.sky, equipment=equip_component)
 	inventory.append(dagger)
-	# dagger.equipment.equip()
-	# dagger.always_visible = True
+	dagger.equipment.equip()
 
 def load_game():
 	# load shelved game
