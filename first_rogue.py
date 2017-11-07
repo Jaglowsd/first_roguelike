@@ -1873,8 +1873,7 @@ def new_game():
 	hotkeys = []
 
 	# test message, welcoming player to dungeon.
-	message('Welcome stranger! Prepare to perish in the Tombs '
-			'of the Ancient King.', libtcod.yellow)
+	message('The warmth of the bonfire brings you strength...', libtcod.flame)
 
 	# Define estus flask
 	estus_flask_max = constants.ESTUS_FLASK_MAX
@@ -1989,12 +1988,8 @@ def initialize_fov():
 def next_level():
 	global dungeon_level
 	# bring player to new dungeon level-redraw map and fov
-	message('You take a moment to rest and recover your strenth',
-			libtcod.light_violet)
-	player.fighter.heal(player.fighter.max_hp/2) # heal player by 50% max hp
-
 	message('After a rare moment of peace, you descend depper into the dungeon',
-			libtcod.red)
+			libtcod.light_violet)
 	dungeon_level += 1
 	make_map()
 	initialize_fov()
