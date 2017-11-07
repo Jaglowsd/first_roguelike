@@ -6,6 +6,7 @@ import sys
 
 import CONSTANTS as constants
 import item_creation
+import fighter_creation
 from rectangle_class import Rectangle
 from tile_class import Tile
 
@@ -162,7 +163,7 @@ class Object:
 
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense, power, stamina, souls, death_function=None,
+	def __init__(self, hp, defense=0, power=0, stamina=0, souls=0, death_function=None,
 				 type=None, modifier=None, phys_def=0, fire_def=0, magic_def=0,
 				 lightning_def=0, phys_atk=0, fire_atk=0, lightning_atk=0,
 				 magic_atk=0, str=1, dex=1, int=1):
@@ -712,8 +713,8 @@ def create_v_tunnel(y1, y2, x):
 
 def place_objects(room):
 	# place objects on map
-	global monster_prefix, item_creation
-	
+	global monster_prefix, item_creation, fighter_creation
+
 	# maximum number of monsters per room, floor dependent
 	max_monsters = from_dungeon_level([[2, 1, constants.END_LEVEL],
 									   [3, 4, constants.END_LEVEL],
@@ -727,6 +728,7 @@ def place_objects(room):
 												   [30, 5, constants.END_LEVEL],
 												   [60, 7, constants.END_LEVEL]]
 												  )
+	monster_chances['hollow'] = 80
 	# generate chances for a prefix.
 	monster_prefix = {}
 	monster_prefix['Weak'] = from_dungeon_level([[75, 1, 2], [25, 2, 4]])
@@ -768,6 +770,10 @@ def place_objects(room):
 				monster = Object(x, y, affixed_name, 'T',
 								 libtcod.dark_green, blocks=True,
 								 fighter=fighter_component, ai=ai_component)
+			elif choice == 'hollow':
+				# hollow
+				monster = fighter_creation.create_fighter('hollow', x, y)
+				monster.fighter.death_function = monster_death
 
 			objects.append(monster)
 		
@@ -1850,19 +1856,23 @@ def new_game():
 	# pieces needed to start a new game
 	global player, inventory, game_msgs, dungeon_level
 	global estus_flask, estus_flask_max, hotkeys
-	
+	global fighter_creation
+
+	# Provide fighter creation with Object class
+	fighter_creation.Object = Object
+	# Additional functions needed for fighter creation
+	fighter_creation.Fighter = Fighter
+	fighter_creation.BasicMonster = BasicMonster
+
 	# initialize player object
-	fighter_component = Fighter(hp=100, defense=1, power=2, stamina=30, souls=0,
-								death_function=player_death)
-	player = Object(0, 0, 'Player', '@', libtcod.white,
-					blocks=True, fighter=fighter_component)
+	player = fighter_creation.create_fighter('player', 0, 0)
 	player.level = 1
 
 	# initialize our map
 	dungeon_level = 1
 	make_map()
 	initialize_fov()
-	
+
 	# player inventory, list of objects
 	inventory = []
 
