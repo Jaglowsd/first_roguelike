@@ -7,6 +7,7 @@ import sys
 import CONSTANTS as constants
 import item_creation
 import fighter_creation
+import prefab_map_A1_B1 as prefab
 from rectangle_class import Rectangle
 from tile_class import Tile
 
@@ -60,7 +61,7 @@ class Object:
 			# regenerate 1 stamina point per step.
 			if cls.fighter.stamina != cls.fighter.max_stamina:
 				cls.fighter.stamina += 1
-			
+
 	def move_towards(cls, target_x, target_y):
 		# vector from this object to tagret object.
 		dx = target_x - cls.x
@@ -590,89 +591,132 @@ class Equipment:
 def make_map():
 	# randomly generates rooms to design a map.
 	global map, objects, stairs, bonfire
+	global fov_map, fov_recompute, fov_noise, noise
 
 	# Store our objects to iterate through
 	objects = [player]
 
-	# Fill map with unblocked tiles.
+	# Fill map with blocked tiles.
 	map = [[Tile(True)
 		for y in range(constants.MAP_HEIGHT)]
 			for x in range(constants.MAP_WIDTH)]
 
-	rooms = []
-	num_rooms = 0
+	# Prefab map for first boss
+	if dungeon_level == 6:
+		map_b = prefab.prefab_map_boss
+		for y in range(constants.PREFAB_HEIGHT):
+			for x in range(constants.PREFAB_WIDTH):
+				map[x][y].explored = True
+				if map_b[y][x] == ' ':
+					# ground
+					map[x][y].block_sight = False
+					map[x][y].blocked = False
+				elif map_b[y][x] == '>':
+					# stairs
+					map[x][y].block_sight = False
+					map[x][y].blocked = False
+					stairs = Object(x, y, 'stairs', '>', libtcod.white,
+									always_visible=True)
+					objects.append(stairs)
+					stairs.send_to_front() # so its drawn below monsters
+				elif map_b[y][x] == '@':
+					# player
+					map[x][y].block_sight = False
+					map[x][y].blocked = False
+					player.x = x
+					player.y = y
+				elif map_b[y][x] == 'A':
+					# Boss
+					map[x][y].block_sight = False
+					map[x][y].blocked = False
+					asylum_demon = fighter_creation.create_fighter('asylum_demon', x, y)
+					objects.append(asylum_demon)
+				elif map_b[y][x] == 'U':
+					# Pots
+					map[x][y].block_sight = False
+					map[x][y].blocked = False
+					pot = Object(x, y, 'pot', 'U', libtcod.brass,
+								 always_visible=True, blocks=True)
+					objects.append(pot)
+		bonfire = Object(99, 99, 'bonfire', '&', libtcod.flame,
+						 blocks=True, always_visible=True)
+		objects.append(bonfire)
 
-	for r in range(constants.MAX_ROOMS):
-		# random width and height for rooms.
-		w = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
-								   constants.ROOM_MAX_SIZE)
-		h = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
-								   constants.ROOM_MAX_SIZE)
-		# random position without going out of bounds.
-		x = libtcod.random_get_int(0, 0, constants.MAP_WIDTH - w - 1)
-		y = libtcod.random_get_int(0, 0, constants.MAP_HEIGHT - h - 1)
+	else:
+		rooms = []
+		num_rooms = 0
 
-		# Create the room as a rectangle object.
-		new_room = Rectangle(x, y, w ,h)
+		for r in range(constants.MAX_ROOMS):
+			# random width and height for rooms.
+			w = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
+									   constants.ROOM_MAX_SIZE)
+			h = libtcod.random_get_int(0, constants.ROOM_MIN_SIZE,
+									   constants.ROOM_MAX_SIZE)
+			# random position without going out of bounds.
+			x = libtcod.random_get_int(0, 0, constants.MAP_WIDTH - w - 1)
+			y = libtcod.random_get_int(0, 0, constants.MAP_HEIGHT - h - 1)
 
-		# Check that new_room does not intersect with existing rooms.
-		failed = False
-		for other_room in rooms:
-			if new_room.intersect(other_room):
-				failed = True
-				break
+			# Create the room as a rectangle object.
+			new_room = Rectangle(x, y, w ,h)
 
-		# no intersections found, so room is valid.
-		if not failed:
-			# 'paint' to map's tiles.
-			create_room(new_room)
+			# Check that new_room does not intersect with existing rooms.
+			failed = False
+			for other_room in rooms:
+				if new_room.intersect(other_room):
+					failed = True
+					break
 
-			# center coordinates of new room.
-			(new_x, new_y) = new_room.center()
+			# no intersections found, so room is valid.
+			if not failed:
+				# 'paint' to map's tiles.
+				create_room(new_room)
 
-			if num_rooms == 0:
-				# first room, where player starts. Place them in center.
-				player.x = new_x + 1
-				player.y = new_y
+				# center coordinates of new room.
+				(new_x, new_y) = new_room.center()
 
-				bonfire = Object(new_x, new_y, 'bonfire', '&', libtcod.flame,
-									blocks=True, always_visible=True)
-				objects.append(bonfire)
+				if num_rooms == 0:
+					# first room, where player starts. Place them in center.
+					player.x = new_x + 1
+					player.y = new_y
 
-			# all rooms after the first.
-			# connect it to the previous room with a tunnel.
-			else:
-				# center coordinates of previous room.
-				(prev_x, prev_y) = rooms[num_rooms-1].center()
+					bonfire = Object(new_x, new_y, 'bonfire', '&', libtcod.flame,
+										blocks=True, always_visible=True)
+					objects.append(bonfire)
 
-				# Build tunnel between rooms.
-				# flip a coin (i.e. either 0 or 1)
-				if libtcod.random_get_int(0, 0, 1) == 1:
-					# first horizontally, then vertically.
-					create_h_tunnel(prev_x, new_x, prev_y)
-					create_v_tunnel(prev_y, new_y, new_x)
+				# all rooms after the first.
+				# connect it to the previous room with a tunnel.
 				else:
-					# vertically, then horizontally.
-					create_v_tunnel(prev_y, new_y, prev_x)
-					create_h_tunnel(prev_x, new_x, new_y)
+					# center coordinates of previous room.
+					(prev_x, prev_y) = rooms[num_rooms-1].center()
 
-			# Append new room to list.
-			rooms.append(new_room)
+					# Build tunnel between rooms.
+					# flip a coin (i.e. either 0 or 1)
+					if libtcod.random_get_int(0, 0, 1) == 1:
+						# first horizontally, then vertically.
+						create_h_tunnel(prev_x, new_x, prev_y)
+						create_v_tunnel(prev_y, new_y, new_x)
+					else:
+						# vertically, then horizontally.
+						create_v_tunnel(prev_y, new_y, prev_x)
+						create_h_tunnel(prev_x, new_x, new_y)
 
-			# Place objects in the new room if its not spawn room
-			if num_rooms != 0:
-				place_objects(new_room)
-			num_rooms += 1
+				# Append new room to list.
+				rooms.append(new_room)
 
-			# Visualization of room drawing order.
-			# room_no = Object(new_x, new_y, chr(63+num_rooms), libtcod.white)
-			# objects.insert(0, room_no)
-			
-	# create stairs at the center of the last room
-	stairs = Object(new_x, new_y, 'stairs', '>', libtcod.white, 
-					always_visible=True)
-	objects.append(stairs)
-	stairs.send_to_front() # so its drawn below monsters
+				# Place objects in the new room if its not spawn room
+				if num_rooms != 0:
+					place_objects(new_room)
+				num_rooms += 1
+
+				# Visualization of room drawing order.
+				# room_no = Object(new_x, new_y, chr(63+num_rooms), libtcod.white)
+				# objects.insert(0, room_no)
+
+		# create stairs at the center of the last room
+		stairs = Object(new_x, new_y, 'stairs', '>', libtcod.white,
+						always_visible=True)
+		objects.append(stairs)
+		stairs.send_to_front() # so its drawn below monsters
 	
 def create_room(room):
 	# Go through given room making the rectangle passable.
@@ -783,15 +827,7 @@ def place_objects(room):
 									[5, 6, constants.END_LEVEL]])
 	# choose random number of items to spawn
 	num_items = libtcod.random_get_int(0, 0, max_items)
-	# Initialize some variables for item creation to work
-	item_creation.Object = Object
-	item_creation.Item = Item
-	item_creation.Equipment = Equipment
-	item_creation.cast_heal = cast_heal
-	item_creation.cast_lighting = cast_lighting
-	item_creation.cast_fireball = cast_fireball
-	item_creation.cast_confuse = cast_confuse
-	item_creation.dungeon_level = dungeon_level
+
 	# dictionary of items and there chances of spawn
 	item_chances = item_creation.item_chance()
 	
@@ -1860,20 +1896,19 @@ def new_game():
 	# pieces needed to start a new game
 	global player, inventory, game_msgs, dungeon_level
 	global estus_flask, estus_flask_max, hotkeys
-	global fighter_creation
 
-	# Provide fighter creation with Object class
-	fighter_creation.Object = Object
-	# Additional functions needed for fighter creation
-	fighter_creation.Fighter = Fighter
-	fighter_creation.BasicMonster = BasicMonster
+	# Set dungeon level here since its needed in the helper functions
+	dungeon_level = 1
+
+	# Fighter and item creation helper functions
+	initialize_helper_modules()
 
 	# initialize player object
 	player = fighter_creation.create_fighter('player', 0, 0)
+	player.death_function = player_death
 	player.level = 1
 
 	# initialize our map
-	dungeon_level = 1
 	make_map()
 	initialize_fov()
 
@@ -1902,6 +1937,25 @@ def new_game():
 	inventory.append(dagger)
 	hotkeys.append(dagger)
 	dagger.equipment.equip()
+
+def initialize_helper_modules():
+	global fighter_creation, item_creation
+
+	# Initialize some variables for item creation to work
+	item_creation.Object = Object
+	item_creation.Item = Item
+	item_creation.Equipment = Equipment
+	item_creation.cast_heal = cast_heal
+	item_creation.cast_lighting = cast_lighting
+	item_creation.cast_fireball = cast_fireball
+	item_creation.cast_confuse = cast_confuse
+	item_creation.dungeon_level = dungeon_level
+
+	# Provide fighter creation with Object class
+	fighter_creation.Object = Object
+	# Additional functions needed for fighter creation
+	fighter_creation.Fighter = Fighter
+	fighter_creation.BasicMonster = BasicMonster
 
 def load_game():
 	# load shelved game
@@ -1984,12 +2038,16 @@ def initialize_fov():
 
 	# On player movement or tile change, recompute fov.
 	fov_recompute = True
-	
+
+	# Default dungeon size
+	width = constants.MAP_WIDTH
+	height = constants.MAP_HEIGHT
+
 	# field of view map
-	fov_map = libtcod.map_new(constants.MAP_WIDTH, constants.MAP_HEIGHT)
-	for y in range(constants.MAP_HEIGHT):
-		for x in range(constants.MAP_WIDTH):
-			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, 
+	fov_map = libtcod.map_new(width, height)
+	for y in range(height):
+		for x in range(width):
+			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight,
 									   not map[x][y].blocked)
 
 	# clear the console to prevent old games from leaving behind the map
