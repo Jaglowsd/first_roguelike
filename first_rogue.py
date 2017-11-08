@@ -603,7 +603,7 @@ def make_map():
 
 	# Prefab map for first boss
 	if dungeon_level == 6:
-		map_b = prefab.prefab_map_boss
+		map_b = prefab.boss_AD
 		for y in range(constants.PREFAB_HEIGHT):
 			for x in range(constants.PREFAB_WIDTH):
 				map[x][y].explored = True
