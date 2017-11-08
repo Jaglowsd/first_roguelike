@@ -4,6 +4,10 @@ import libtcodpy as libtcod
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 60
 
+# size of first boss prefab map
+PREFAB_WIDTH = 100
+PREFAB_HEIGHT = 34
+
 # GUI bar size
 BAR_WIDTH = 20
 
