@@ -13,3 +13,6 @@ player =		   {
 hollow = 		   {			
 					'fighter_comp': [35, 1, 35, None, None, None, 1, 0, 0, 0, 4, 0, 0, 0, 1, 1, 1],
 					'object': ['Hollow', 'h', libtcod.light_fuchsia, True]}
+asylum_demon = 	   {
+					'fighter_comp': [100, 1, 5000, None, None, None, 6, 0, 0, 0, 10, 0, 0, 0, 1, 1, 1],
+					'object': ['Asylum Demon', 'A', libtcod.darker_yellow, True]}
