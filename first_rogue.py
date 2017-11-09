@@ -5,11 +5,11 @@ import shelve
 import sys
 
 import CONSTANTS as constants
-import item_creation
-import fighter_creation
-import prefab_map_A1_B1 as prefab
-from rectangle_class import Rectangle
-from tile_class import Tile
+from item import item_creation
+from fighter import fighter_creation
+from prefab_map import prefab_map_A1 as prefab
+from classes import rectangle
+from classes import tile
 
 #############
 ## Classes ##
@@ -597,7 +597,7 @@ def make_map():
 	objects = [player]
 
 	# Fill map with blocked tiles.
-	map = [[Tile(True)
+	map = [[tile.Tile(True)
 		for y in range(constants.MAP_HEIGHT)]
 			for x in range(constants.MAP_WIDTH)]
 
@@ -639,7 +639,7 @@ def make_map():
 								 always_visible=True, blocks=True)
 					objects.append(pot)
 		bonfire = Object(99, 99, 'bonfire', '&', libtcod.flame,
-						 blocks=True, always_visible=True)
+						 blocks=True, always_visible=False)
 		objects.append(bonfire)
 
 	else:
@@ -657,7 +657,7 @@ def make_map():
 			y = libtcod.random_get_int(0, 0, constants.MAP_HEIGHT - h - 1)
 
 			# Create the room as a rectangle object.
-			new_room = Rectangle(x, y, w ,h)
+			new_room = rectangle.Rectangle(x, y, w ,h)
 
 			# Check that new_room does not intersect with existing rooms.
 			failed = False
