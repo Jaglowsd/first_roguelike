@@ -779,14 +779,14 @@ def place_objects(room):
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
 	monster_chances = {}
-	monster_chances['rat'] = from_dungeon_level([[60, 1, 2],
+	monster_chances['undead_rat'] = from_dungeon_level([[60, 1, 2],
 													 [25, 3, 4]])
 	monster_chances['hollow'] = from_dungeon_level([[40, 1, 2],
 													 [45, 3, 4],
 													 [35, 5, 6]])
 	monster_chances['undead_soldier'] = from_dungeon_level([[30, 3, 4],
 													 [50, 5, 6]])
-	monster_chances['black_knight'] = from_dungeon_level([[15, 5, 6]])
+	monster_chances['black_knight_sword'] = from_dungeon_level([[15, 5, 6]])
 
 	for i in range(num_monsters):
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -795,9 +795,9 @@ def place_objects(room):
 		if not is_blocked(x, y):
 			choice = random_choice(monster_chances)
 			# (affixed_name, mod) = choose_affix(choice)
-			if choice == 'rat':
+			if choice == 'undead_rat':
 				# rat
-				monster = fighter_creation.create_fighter('rat', x, y)
+				monster = fighter_creation.create_fighter('undead_rat', x, y)
 				monster.fighter.death_function = monster_death
 			elif choice == 'hollow':
 				# hollow
@@ -808,9 +808,9 @@ def place_objects(room):
 				monster = fighter_creation.create_fighter('undead_soldier',
 														  x, y)
 				monster.fighter.death_function = monster_death
-			elif choice == 'black_knight':
+			elif choice == 'black_knight_sword':
 				# black knight
-				monster = fighter_creation.create_fighter('black_knight',
+				monster = fighter_creation.create_fighter('black_knight_sword',
 														  x, y)
 				monster.fighter.death_function = monster_death
 			if monster:
@@ -835,25 +835,29 @@ def place_objects(room):
 			# create a chance for item to spawn
 			choice = random_choice(item_chances)
 			if choice == 'lifegem':
-				item = item_creation.create_consumable('lifegem', x, y)
-				item.use_function = cast_heal
+				item_object = item_creation.create_consumable('lifegem', x, y)
+				item_object.item.use_function = cast_heal
 			elif choice == 'lightning_spell':
-				item = item_creation.create_consumable('lightning_spell', x, y)
-				item.use_function = cast_lighting
+				item_object = item_creation.create_consumable('lightning_spell', x, y)
+				item_object.item.use_function = cast_lighting
 			elif choice == 'fireball':
-				item = item_creation.create_consumable('fireball', x, y)
-				item.use_function = cast_fireball
+				item_object = item_creation.create_consumable('fireball', x, y)
+				item_object.item.use_function = cast_fireball
 			elif choice =='confuse_spell':
-				item = item_creation.create_consumable('confuse_spell', x, y)
-				item.use_function = cast_confuse
+				item_object = item_creation.create_consumable('confuse_spell', x, y)
+				item_object.item.use_function = cast_confuse
+			elif choice == 'soul_of_a_lost_undead':
+				item_object = item_creation.create_consumable('soul_of_a_lost_undead', x, y)
+				item_object.item.use_function = consume_souls
+				item_object.item.souls = 200
 			elif choice == 'straight_sword':
-				item = item_creation.create_equipment('straight_sword', x, y)
+				item_object = item_creation.create_equipment('straight_sword', x, y)
 			elif choice == 'dagger':
-				item = item_creation.create_equipment('dagger', x, y)
+				item_object = item_creation.create_equipment('dagger', x, y)
 
-			if item:
-				objects.append(item)
-				item.send_to_front() # item appear below other objects.
+			if item_object:
+				objects.append(item_object)
+				item_object.send_to_front() # item appear below other objects.
 			else:
 				msgbox('Something went wrong with item creation.\n', 30)
 
@@ -987,6 +991,13 @@ def cast_fireball(cls):
 			message(object.name + ' is caught in the explosion taking ' 
 					+ str(constants.FIREBALL_DAMAGE) + ' hitpoints.', libtcod.orange)
 			object.fighter.take_damage(constants.FIREBALL_DAMAGE)
+
+def consume_souls(cls):
+	# Use consumable souls
+	if cls.souls:
+		player.fighter.souls += cls.souls
+		message('You crush the soul in your hand giving you '
+				+ str(cls.souls) + ' souls.', libtcod.lightest_crimson)
 
 def player_death(player):
 	# Modify game state in the event the player dies.
