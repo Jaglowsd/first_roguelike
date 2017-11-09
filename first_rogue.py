@@ -549,14 +549,19 @@ class Equipment:
 
 	def equip(cls):
 		# if the slot is already in use, dequip the item and equip the new one
-		old_equip = cls.get_equiped_in_slot(cls.slot)
-		if old_equip is not None:
-			old_equip.dequip()
+		can_equip = cls.equip_requirements()
+		if can_equip:
+			old_equip = get_equiped_in_slot(cls.slot)
+			if old_equip is not None:
+				old_equip.dequip()
 
-		# equip object and display message
-		cls.is_equiped = True
-		message('Equiped ' + cls.owner.name + ' to ' + cls.slot + '.',
-				libtcod.light_green)
+			# equip object and display message
+			cls.is_equiped = True
+			message('Equiped ' + cls.owner.name + ' to ' + cls.slot + '.',
+					libtcod.light_green)
+		else:
+			message('Insufficient stats to wield ' + cls.owner.name + '.',
+					libtcod.red)
 
 	def dequip(cls):
 		# dequip object and show message
@@ -578,6 +583,14 @@ class Equipment:
 		# equipment usage drains stamina
 		player.fighter.stamina -= cls.stamina_usage
 
+	def equip_requirements(cls):
+		if player.fighter:
+			stats = [player.fighter.str, player.fighter.dex, player.fighter.int]
+			for i in range(0, 2):
+				if stats[i] < cls.requirements[i]:
+					return False
+			return True
+		return False
 
 ##########################
 ## End of Classes (EOC) ##
