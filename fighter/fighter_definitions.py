@@ -8,31 +8,31 @@ import libtcodpy as libtcod
 		# phys_atk, fire_atk, lightning_atk, magic_atk,
 		# str, dex, int
 	# 2. Object class values
-player =		   {
-					'fighter_comp': [100, 30, 0, None, None, None,
+player =	   {
+					'fighter_comp': [100, 40, 0, None, None, None,
 					3, 1, 1, 1, # Defense
 					1, 0, 0, 0, # Attack
 					1, 1, 1], # Base stats
 					'object': ['Player', '@', libtcod.white, True]}
-hollow = 		   {			
+hollow = 	   {
 					'fighter_comp': [35, 1, 92, None, None, None,
 					1, 0, 0, 0,
 					4, 0, 0, 0,
 					1, 1, 1],
 					'object': ['Hollow', 'h', libtcod.light_fuchsia, True]}
-rat = 		   {
+undead_rat = 	{
 					'fighter_comp': [15, 1, 60, None, None, None,
 					0, 0, 0, 0,
 					3, 0, 0, 0,
 					1, 1, 1],
 					'object': ['Rat', 'r', libtcod.dark_sepia, True]}
-undead_soldier ={
+undead_soldier= {
 					'fighter_comp': [50, 1, 146, None, None, None,
-						4, 0, 0, 0,
+					4, 0, 0, 0,
 					8, 0, 0, 0,
 					1, 1, 1],
 					'object': ['Undead Soldier', 's', libtcod.silver, True]}
-black_knight =  {
+black_knight_sword={
 					'fighter_comp': [50, 1, 450, None, None, None,
 					7, 3, 1, 1,
 					10, 0, 0, 0,
