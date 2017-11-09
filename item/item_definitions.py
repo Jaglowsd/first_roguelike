@@ -6,7 +6,7 @@ import libtcodpy as libtcod
 
 # Static consumable item definitions
 lifegem = 			['lifegem', '!', libtcod.light_yellow, '', True]
-rations = 			['rations', 'r', libtcod.sepia, '', True]
+rations = 			['rations', 'q', libtcod.sepia, '', True]
 lightning_spell = 	['Lighting spell', 'Z', libtcod.yellow, '', True]
 fireball = 			['Fireball', 'F', libtcod.orange,'', True]
 confuse_spell = 	['Confusion spell', 'C', libtcod.cyan, '', True]
