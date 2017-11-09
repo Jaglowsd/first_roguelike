@@ -1,0 +1,1 @@
+__all__ = ["prefab_map_A1"]
