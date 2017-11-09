@@ -16,12 +16,14 @@ def from_dungeon_level(table):
 def item_chance():
 	# dictionary of items and there chances of spawn
 	item_chances = {}
-	item_chances['lifegem'] = 25 # heal spawn is floor independent
-	item_chances['confuse_spell'] = from_dungeon_level([[10, 2, constants.END_LEVEL]])
-	item_chances['lightning_spell'] = from_dungeon_level([[25, 4, constants.END_LEVEL]])
-	item_chances['fireball'] = from_dungeon_level([[25, 6, constants.END_LEVEL]])
+	item_chances['lifegem'] = from_dungeon_level([[30, 1, 3], [40, 4, 6]])
+	item_chances['confuse_spell'] = from_dungeon_level([[10, 2, 3], [20, 4, 5]])
+	item_chances['lightning_spell'] = from_dungeon_level([[10, 3, 5], [15, 5, 6]])
+	item_chances['fireball'] = from_dungeon_level([[5, 4, 6]])
 	item_chances['straight_sword'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
 	item_chances['dagger'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
+	item_chances['soul_of_a_lost_undead'] = from_dungeon_level([[20, 1, 3],
+																[30, 4, 6]])
 
 	return item_chances
 
