@@ -164,10 +164,9 @@ class Object:
 
 class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
-	def __init__(self, hp, defense=0, power=0, stamina=0, souls=0, death_function=None,
-				 type=None, modifier=None, phys_def=0, fire_def=0, magic_def=0,
-				 lightning_def=0, phys_atk=0, fire_atk=0, lightning_atk=0,
-				 magic_atk=0, str=1, dex=1, int=1):
+	def __init__(self, hp, stamina, souls, death_function, type, modifier,
+				 phys_def, fire_def, lightning_def, magic_def,
+				 phys_atk, fire_atk, lightning_atk, magic_atk, str, dex, int):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_str = str # Strength
@@ -780,24 +779,14 @@ def place_objects(room):
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
 	monster_chances = {}
-	monster_chances['orc'] = 80 # orc spawn is floor independent
-	monster_chances['troll'] = from_dungeon_level([[15, 3, constants.END_LEVEL],
-												   [30, 5, constants.END_LEVEL],
-												   [60, 7, constants.END_LEVEL]]
-												  )
-	monster_chances['hollow'] = 80
-	# generate chances for a prefix.
-	monster_prefix = {}
-	monster_prefix['Weak'] = from_dungeon_level([[75, 1, 2], [25, 2, 4]])
-	monster_prefix['Lesser'] = from_dungeon_level([[25, 1, 2], [50, 2, 4],
-												   [25, 4, 6]])
-	monster_prefix['Greater'] = from_dungeon_level([[25, 2, 4], [65, 4, 6],
-													[75, 6, 8],
-													[50, 6, constants.END_LEVEL]])
-	monster_prefix['Badass'] = from_dungeon_level([[10, 4, 6], [20, 6, 8],
-												  [35, 8, constants.END_LEVEL]])
-	monster_prefix['SuperBadass'] = from_dungeon_level([[5, 6, 8],
-											  [15, 8, constants.END_LEVEL]])
+	monster_chances['rat'] = from_dungeon_level([[60, 1, 2],
+													 [25, 3, 4]])
+	monster_chances['hollow'] = from_dungeon_level([[40, 1, 2],
+													 [45, 3, 4],
+													 [35, 5, 6]])
+	monster_chances['undead_soldier'] = from_dungeon_level([[30, 3, 4],
+													 [50, 5, 6]])
+	monster_chances['black_knight'] = from_dungeon_level([[15, 5, 6]])
 
 	for i in range(num_monsters):
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -805,35 +794,28 @@ def place_objects(room):
 
 		if not is_blocked(x, y):
 			choice = random_choice(monster_chances)
-			(affixed_name, mod) = choose_affix(choice)
-			if choice == 'orc':
-				# create orc				
-				fighter_component = Fighter(hp=20, defense=0, power=4,
-											stamina=1, souls=35,
-											death_function=monster_death,
-											type=constants.ORC, modifier=mod)
-				ai_component = BasicMonster()
-				monster = Object(x, y, affixed_name, 'o',
-								 libtcod.darker_green, blocks=True,
-								 fighter=fighter_component, ai=ai_component)
-			elif choice == 'troll':
-				# create troll
-				fighter_component = Fighter(hp=30, defense=2, power=8,
-											stamina=1, souls=100,
-											death_function=monster_death,
-											type=constants.TROLL, modifier=mod)
-				ai_component = BasicMonster()
-
-				monster = Object(x, y, affixed_name, 'T',
-								 libtcod.dark_green, blocks=True,
-								 fighter=fighter_component, ai=ai_component)
+			# (affixed_name, mod) = choose_affix(choice)
+			if choice == 'rat':
+				# rat
+				monster = fighter_creation.create_fighter('rat', x, y)
+				monster.fighter.death_function = monster_death
 			elif choice == 'hollow':
 				# hollow
 				monster = fighter_creation.create_fighter('hollow', x, y)
 				monster.fighter.death_function = monster_death
+			elif choice == 'undead_soldier':
+				# undead soldier
+				monster = fighter_creation.create_fighter('undead_soldier',
+														  x, y)
+				monster.fighter.death_function = monster_death
+			elif choice == 'black_knight':
+				# black knight
+				monster = fighter_creation.create_fighter('black_knight',
+														  x, y)
+				monster.fighter.death_function = monster_death
+			if monster:
+				objects.append(monster)
 
-			objects.append(monster)
-		
 	# maximum number of items per room, floor dependent
 	max_items = from_dungeon_level([[2, 1, constants.END_LEVEL],
 									[3, 4, constants.END_LEVEL],
@@ -1918,7 +1900,7 @@ def new_game():
 
 	# initialize player object
 	player = fighter_creation.create_fighter('player', 0, 0)
-	player.death_function = player_death
+	player.fighter.death_function = player_death
 	player.level = 1
 
 	# initialize our map
