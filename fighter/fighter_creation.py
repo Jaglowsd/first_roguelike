@@ -4,17 +4,26 @@ import libtcodpy as libtcod
 import CONSTANTS as constants
 import fighter_definitions as f_defs
 
-# def monster_chance():
-	# dictionary of items and there chances of spawn
-	# item_chances = {}
-	# item_chances['lifegem'] = 25 # heal spawn is floor independent
-	# item_chances['confuse_spell'] = from_dungeon_level([[10, 2, constants.END_LEVEL]])
-	# item_chances['lightning_spell'] = from_dungeon_level([[25, 4, constants.END_LEVEL]])
-	# item_chances['fireball'] = from_dungeon_level([[25, 6, constants.END_LEVEL]])
-	# item_chances['straight_sword'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
-	# item_chances['dagger'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
+def from_dungeon_level(table):
+	# returns value depending on dungeon level. The table specifies what
+	# value occurs after each level, default is 0.
+	for (value, min_level, max_level) in reversed(table):
+		if dungeon_level >= min_level and dungeon_level <= max_level:
+			return value
+	return 0
 
-	# return item_chances
+def monster_chance():
+	# dictionary of monsters and there chances of spawn
+	monster_chances = {}
+	monster_chances['undead_rat'] = from_dungeon_level([[60, 1, 2],
+													 [25, 3, 4]])
+	monster_chances['hollow'] = from_dungeon_level([[40, 1, 2],
+													 [45, 3, 4],
+													 [35, 5, 6]])
+	monster_chances['undead_soldier'] = from_dungeon_level([[30, 3, 4],
+													 [50, 5, 6]])
+	monster_chances['black_knight_sword'] = from_dungeon_level([[15, 5, 6]])
+	return monster_chances
 
 def create_object(definition, x, y, f_component=None, a_component=None):
 	# Returns the newly created object with all its components attached
@@ -23,7 +32,7 @@ def create_object(definition, x, y, f_component=None, a_component=None):
 							ai=a_component)
 	return fighter_object
 
-def create_fighter(fighter_name, x, y):
+def create_fighter(fighter_name, x, y, death_func=None):
 	# create fighter and ai components
 	definition = getattr(f_defs, fighter_name)
 	if definition:
@@ -31,7 +40,7 @@ def create_fighter(fighter_name, x, y):
 		fighter_component = None
 		fighter = definition['fighter_comp']
 		if fighter:
-			fighter_component = Fighter(hp=fighter[0], stamina=fighter[1], souls=fighter[2], death_function=fighter[3], type=fighter[4], modifier=fighter[5],
+			fighter_component = Fighter(hp=fighter[0], stamina=fighter[1], souls=fighter[2], death_function=death_func, type=fighter[4], modifier=fighter[5],
 										phys_def=fighter[6], fire_def=fighter[7], magic_def=fighter[8], lightning_def=fighter[9], phys_atk=fighter[10],
 										fire_atk=fighter[11], lightning_atk=fighter[12], magic_atk=fighter[13], str=fighter[14], dex=fighter[15], int=fighter[16])
 		# AI component
