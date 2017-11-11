@@ -1,7 +1,6 @@
 # Consumable and equipment creation functions
 
 import libtcodpy as libtcod
-import CONSTANTS as constants
 import item_definitions as i_defs
 from classes import weapon_armor
 
@@ -13,19 +12,26 @@ def from_dungeon_level(table):
 			return value
 	return 0
 
-def item_chance():
-	# dictionary of items and there chances of spawn
-	item_chances = {}
-	item_chances['lifegem'] = from_dungeon_level([[30, 1, 3], [40, 4, 6]])
-	item_chances['confuse_spell'] = from_dungeon_level([[10, 2, 3], [20, 4, 5]])
-	item_chances['lightning_spell'] = from_dungeon_level([[10, 3, 5], [15, 5, 6]])
-	item_chances['fireball'] = from_dungeon_level([[5, 4, 6]])
-	item_chances['straight_sword'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
-	item_chances['dagger'] = from_dungeon_level([[2, 1, constants.END_LEVEL]])
-	item_chances['soul_of_a_lost_undead'] = from_dungeon_level([[20, 1, 3],
+def item_consumable_chance():
+	# dictionary of consumables and there chances of spawn
+	cons_chances = {}
+	cons_chances['lifegem'] = from_dungeon_level([[30, 1, 3], [40, 4, 6]])
+	cons_chances['confuse_spell'] = from_dungeon_level([[10, 2, 3], [20, 4, 5]])
+	cons_chances['lightning_spell'] = from_dungeon_level([[10, 3, 5], [15, 5, 6]])
+	cons_chances['fireball'] = from_dungeon_level([[5, 4, 6]])
+	cons_chances['soul_of_a_lost_undead'] = from_dungeon_level([[20, 1, 3],
 																[30, 4, 6]])
 
-	return item_chances
+	return cons_chances
+
+def item_equipment_chance():
+	# dictionary of equipment and there chances of spawn
+	equip_chances = {}
+	equip_chances['nothing'] = from_dungeon_level([[50, 1, 6]])
+	equip_chances['straight_sword'] = from_dungeon_level([[25, 1, 6]])
+	equip_chances['dagger'] = from_dungeon_level([[25, 1, 6]])
+
+	return equip_chances
 
 def create_object(definition, x, y, i_component=None, e_component=None):
 	# Returns the newly created object with all its components attached
@@ -33,12 +39,12 @@ def create_object(definition, x, y, i_component=None, e_component=None):
 						equipment=e_component, item=i_component, always_visible=definition[4])
 	return item_object
 
-def create_consumable(item_name, x, y, cnt=1):
+def create_consumable(item_name, x, y, use_func=None, cnt=1):
 	# create consumable item component
 	item = getattr(i_defs, item_name)
 	if item:
 		# Item component
-		item_component = Item(use_function=None, count=cnt)
+		item_component = Item(use_function=use_func, count=cnt)
 		return create_object(item, x, y, i_component=item_component)
 	return None
 
