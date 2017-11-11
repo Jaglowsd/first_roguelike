@@ -6,7 +6,7 @@ import sys
 
 import CONSTANTS as constants
 from item import item_creation
-from fighter import fighter_creation
+from fighter import fighter_creation, fighter_definitions
 from prefab_map import prefab_map_A1 as prefab
 from classes import rectangle
 from classes import tile
@@ -771,6 +771,9 @@ def place_objects(room):
 	# place objects on map
 	global monster_prefix, item_creation, fighter_creation
 
+	##############
+	## Monsters ##
+	##############
 	# maximum number of monsters per room, floor dependent
 	max_monsters = from_dungeon_level([[2, 1, constants.END_LEVEL],
 									   [3, 4, constants.END_LEVEL],
@@ -778,15 +781,7 @@ def place_objects(room):
 	# choose random number of monsters.
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
 	# dictionary of monsters and there chances of spawn
-	monster_chances = {}
-	monster_chances['undead_rat'] = from_dungeon_level([[60, 1, 2],
-													 [25, 3, 4]])
-	monster_chances['hollow'] = from_dungeon_level([[40, 1, 2],
-													 [45, 3, 4],
-													 [35, 5, 6]])
-	monster_chances['undead_soldier'] = from_dungeon_level([[30, 3, 4],
-													 [50, 5, 6]])
-	monster_chances['black_knight_sword'] = from_dungeon_level([[15, 5, 6]])
+	monster_chances = fighter_creation.monster_chance()
 
 	for i in range(num_monsters):
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -795,71 +790,78 @@ def place_objects(room):
 		if not is_blocked(x, y):
 			choice = random_choice(monster_chances)
 			# (affixed_name, mod) = choose_affix(choice)
-			if choice == 'undead_rat':
-				# rat
-				monster = fighter_creation.create_fighter('undead_rat', x, y)
-				monster.fighter.death_function = monster_death
-			elif choice == 'hollow':
-				# hollow
-				monster = fighter_creation.create_fighter('hollow', x, y)
-				monster.fighter.death_function = monster_death
-			elif choice == 'undead_soldier':
-				# undead soldier
-				monster = fighter_creation.create_fighter('undead_soldier',
-														  x, y)
-				monster.fighter.death_function = monster_death
-			elif choice == 'black_knight_sword':
-				# black knight
-				monster = fighter_creation.create_fighter('black_knight_sword',
-														  x, y)
-				monster.fighter.death_function = monster_death
+			monster = fighter_creation.create_fighter(choice, x, y, monster_death)
 			if monster:
 				objects.append(monster)
 
-	# maximum number of items per room, floor dependent
-	max_items = from_dungeon_level([[2, 1, constants.END_LEVEL],
-									[3, 4, constants.END_LEVEL],
-									[5, 6, constants.END_LEVEL]])
-	# choose random number of items to spawn
-	num_items = libtcod.random_get_int(0, 0, max_items)
+	#################
+	## Consumables ##
+	#################
+	# maximum number of consumables per room, floor dependent
+	max_consumables = from_dungeon_level([[2, 1, 2],
+										[3, 3, 4],
+										[5, 5, 6]])
+	# choose random number of consumables to spawn
+	num_items = libtcod.random_get_int(0, 0, max_consumables)
 
-	# dictionary of items and there chances of spawn
-	item_chances = item_creation.item_chance()
+	# dictionary of consumables and there chances of spawn
+	cons_chances = item_creation.item_consumable_chance()
 	
 	for i in range(num_items):
-		# choose random spot for items
+		# choose random spot for consumables
 		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
 		y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
 		
 		if not is_blocked(x, y):
-			# create a chance for item to spawn
-			choice = random_choice(item_chances)
+			# create a chance for consumables to spawn
+			choice = random_choice(cons_chances)
+			item_object = None
 			if choice == 'lifegem':
-				item_object = item_creation.create_consumable('lifegem', x, y)
-				item_object.item.use_function = cast_heal
+				item_object = item_creation.create_consumable('lifegem', x, y, cast_heal)
 			elif choice == 'lightning_spell':
-				item_object = item_creation.create_consumable('lightning_spell', x, y)
-				item_object.item.use_function = cast_lighting
+				item_object = item_creation.create_consumable('lightning_spell', x, y, cast_lighting)
 			elif choice == 'fireball':
-				item_object = item_creation.create_consumable('fireball', x, y)
-				item_object.item.use_function = cast_fireball
+				item_object = item_creation.create_consumable('fireball', x, y, cast_fireball)
 			elif choice =='confuse_spell':
-				item_object = item_creation.create_consumable('confuse_spell', x, y)
-				item_object.item.use_function = cast_confuse
+				item_object = item_creation.create_consumable('confuse_spell', x, y, cast_confuse)
 			elif choice == 'soul_of_a_lost_undead':
-				item_object = item_creation.create_consumable('soul_of_a_lost_undead', x, y)
-				item_object.item.use_function = consume_souls
+				item_object = item_creation.create_consumable('soul_of_a_lost_undead', x, y, consume_souls)
 				item_object.item.souls = 200
-			elif choice == 'straight_sword':
-				item_object = item_creation.create_equipment('straight_sword', x, y)
-			elif choice == 'dagger':
-				item_object = item_creation.create_equipment('dagger', x, y)
 
 			if item_object:
 				objects.append(item_object)
 				item_object.send_to_front() # item appear below other objects.
 			else:
 				msgbox('Something went wrong with item creation.\n', 30)
+
+	###############
+	## Equipment ##
+	###############
+	# maximum number of equipment per room, floor dependent
+	max_equip = from_dungeon_level([[1, 1, 2],
+									[2, 3, 4],
+									[3, 5, 6]])
+	# choose random number of equipment to spawn
+	num_items = libtcod.random_get_int(0, 0, max_equip)
+
+	# dictionary of equipment and there chances of spawn
+	equip_chances = item_creation.item_equipment_chance()
+
+	for i in range(num_items):
+		# choose random spot for equipment
+		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
+		y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+
+		item_object = None
+		if not is_blocked(x, y):
+			# create a chance for equipment to spawn
+			choice = random_choice(equip_chances)
+			if choice != 'nothing':
+				item_object = item_creation.create_equipment(choice, x, y)
+
+		if item_object:
+			objects.append(item_object)
+			item_object.send_to_front() # item appear below other objects.
 
 def from_dungeon_level(table):
 	# returns value depending on dungeon level. The table specifies what
@@ -1029,29 +1031,30 @@ def monster_death(monster):
 def loot_drop(monster):
 	# drop loot based on a pool of items tied to a monster/NPC
 	
-	# List of objects that can be dropped, corresponding to the type argument
+	# List of objects that can be dropped by the type of monster
 	type = monster.fighter.type
-	loot_chances = constants.MONSTER_LOOT_POOL[type]
-	choice = random_choice(loot_chances)
+	if type:
+		monster_def = getattr(fighter_definitions, type)
+		loot_chances = monster_def['loot']
+		print loot_chances
+		choice = random_choice(loot_chances)
 
-	item = None
-	if type == constants.ORC:
-		if choice == constants.ORA:
-			item = item_creation.create_equipment('orcs_right_arm', monster.x,
-												  monster.y)
-		elif choice == constants.RATIONS:
-			item = item_creation.create_consumable('rations', monster.x,
-												  monster.y)
-		elif choice == constants.GOLD:
-			message('5 gold was dropped by the orc', libtcod.gold)
-	elif type == constants.TROLL:
-		if choice == constants.CLUB:
-			item = item_creation.create_equipment('club', monster.x, monster.y)
-		elif choice == constants.GOLD:
-			message('8 gold was dropped by the troll', libtcod.gold)
-	if item:
-		objects.append(item)
-		item.send_to_front() # item appear below other objects.
+	item_object = None
+	if choice != 'nothing':
+		if choice == 'soul_of_a_lost_undead':
+			item_object = item_creation.create_consumable(choice, monster.x,
+													monster.y, consume_souls)
+			item_object.item.souls = 200
+		elif choice == 'broken_str_sword':
+			item_object = item_creation.create_equipment(choice, monster.x,
+														  monster.y)
+		elif choice == 'black_knight_greatsword':
+			item_object = item_creation.create_equipment(choice, monster.x,
+														  monster.y)
+
+	if item_object:
+		objects.append(item_object)
+		item_object.send_to_front() # item appear below other objects.
 			
 def target_tile(max_range=None):
 	# return position of tile that player left clicks within fov 
@@ -1903,15 +1906,14 @@ def new_game():
 	global player, inventory, game_msgs, dungeon_level
 	global estus_flask, estus_flask_max, hotkeys
 
-	# Set dungeon level here since its needed in the helper functions
+	# Set dungeon level here since its needed in the helper modules
 	dungeon_level = 1
 
 	# Fighter and item creation helper functions
 	initialize_helper_modules()
 
 	# initialize player object
-	player = fighter_creation.create_fighter('player', 0, 0)
-	player.fighter.death_function = player_death
+	player = fighter_creation.create_fighter('player', 0, 0, player_death)
 	player.level = 1
 
 	# initialize our map
@@ -1932,17 +1934,17 @@ def new_game():
 
 	# Make estus flask
 	estus_flask_max = constants.ESTUS_FLASK_MAX
-	estus_flask = item_creation.create_consumable('estus_flask', 0, 0,
+	estus_flask = item_creation.create_consumable('estus_flask', 0, 0, cast_heal,
 												  estus_flask_max)
-	estus_flask.item.use_function = cast_heal
 	inventory.append(estus_flask)
 	hotkeys.append(estus_flask)
 
 	# starting equipment for player
 	dagger = item_creation.create_equipment('dagger', 0, 0)
-	inventory.append(dagger)
-	hotkeys.append(dagger)
-	dagger.equipment.equip()
+	if dagger:
+		inventory.append(dagger)
+		hotkeys.append(dagger)
+		dagger.equipment.equip()
 
 def initialize_helper_modules():
 	global fighter_creation, item_creation
@@ -1951,10 +1953,6 @@ def initialize_helper_modules():
 	item_creation.Object = Object
 	item_creation.Item = Item
 	item_creation.Equipment = Equipment
-	item_creation.cast_heal = cast_heal
-	item_creation.cast_lighting = cast_lighting
-	item_creation.cast_fireball = cast_fireball
-	item_creation.cast_confuse = cast_confuse
 	item_creation.dungeon_level = dungeon_level
 
 	# Provide fighter creation with Object class
@@ -1962,6 +1960,7 @@ def initialize_helper_modules():
 	# Additional functions needed for fighter creation
 	fighter_creation.Fighter = Fighter
 	fighter_creation.BasicMonster = BasicMonster
+	fighter_creation.dungeon_level = dungeon_level
 
 def load_game():
 	# load shelved game
@@ -2068,6 +2067,8 @@ def next_level():
 	message('After a rare moment of peace, you descend depper into the dungeon',
 			libtcod.light_violet)
 	dungeon_level += 1
+	fighter_creation.dungeon_level += 1
+	item_creation.dungeon_level += 1
 	make_map()
 	initialize_fov()
 
