@@ -15,7 +15,7 @@ class Weapon:
 class Armor:
 	# Armor is a subset to equipment so that we can define defensive ratings
 	def __init__(self, phys_def, fire_def, lightning_def, magic_def,
-				 poise_def, str_bonus, dex_bonus, int_bonus, armor_slot):
+				 poise_def, str_bonus, dex_bonus, int_bonus):
 		self.phys_def = phys_def
 		self.fire_def = fire_def
 		self.lightning_def = lightning_def
@@ -24,4 +24,3 @@ class Armor:
 		self.str_bonus = str_bonus
 		self.dex_bonus = dex_bonus
 		self.int_bonus = int_bonus
-		self.armor_slot = armor_slot
