@@ -41,3 +41,18 @@ club = 			   {
 					'weapon_comp': [12, 0, 0, 0, 0, 'club'],
 					'armor_comp': None,
 					'object': ['Club', 'P', libtcod.sepia, '', True]}
+broken_str_sword = {
+					'equip_component': ['main hand', 0, 0, 1, 1, None, [1, 1, 1]],
+					'weapon_comp': [1, 0, 0, 0, 0, 'straight sword'],
+					'armor_comp': None,
+					'object': ['Broken Straight Sword', '/', libtcod.light_sea, '', True]}
+black_knight_greatsword = {
+					'equip_component': ['main hand', 0, 0, 6, 1, None, [12, 6, 1]],
+					'weapon_comp': [8, 8, 0, 0, 0, 'great sword'],
+					'armor_comp': None,
+					'object': ['Black Knight Greatsword', '/', libtcod.color_lerp(libtcod.black, libtcod.orange, .75), '', True]}
+wooden_shield = 	{
+					'equip_component': ['off hand', 0, 0, 0, 1, None, [4, 1, 1]],
+					'weapon_comp': None,
+					'armor_comp': [2, 0, 0, 0, 0, 0, 0, 0],
+					'object': ['Wooden Shield', 'Q', libtcod.sepia, '', True]}
