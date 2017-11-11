@@ -831,8 +831,6 @@ def place_objects(room):
 			if item_object:
 				objects.append(item_object)
 				item_object.send_to_front() # item appear below other objects.
-			else:
-				msgbox('Something went wrong with item creation.\n', 30)
 
 	###############
 	## Equipment ##
