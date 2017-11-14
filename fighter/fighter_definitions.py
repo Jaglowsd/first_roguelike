@@ -24,9 +24,9 @@ hollow = 	   {
 undead_rat = 	{
 					'fighter_comp': [15, 1, 60, None, 'undead_rat', None,
 					0, 0, 0, 0,
-					3, 0, 0, 0,
+					4, 0, 0, 0,
 					1, 1, 1],
-					'object': ['Rat', 'r', libtcod.dark_sepia, True],
+					'object': ['Undead Rat', 'r', libtcod.dark_sepia, True],
 					'loot': {'nothing': 95, 'soul_of_a_lost_undead': 5}}
 undead_soldier= {
 					'fighter_comp': [50, 1, 232, None, 'undead_soldier', None,
