@@ -1472,11 +1472,15 @@ def render_gui():
 		libtcod.console_hline(hotkey_panel, 1, i*2+1, constants.HOTKEY_PANEL_WIDTH - 5)
 		i += 1
 
+	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
+							 constants.HOTKEY_PANEL_HEIGHT - 4,
+							 libtcod.BKGND_NONE, libtcod.CENTER,
+							'Undead Burg')
 	# display current dungeon level to player
 	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
 							 constants.HOTKEY_PANEL_HEIGHT - 2,
 							 libtcod.BKGND_NONE, libtcod.CENTER,
-							'Dungeon Level ' + str(dungeon_level))
+							'Depth ' + str(dungeon_level))
 
 	# blit contents of 'hotkey panel' to root console
 	libtcod.console_blit(hotkey_panel, 0, 0, constants.HOTKEY_PANEL_WIDTH,
