@@ -312,7 +312,7 @@ class Fighter:
 			if equip is not None:
 				equip.use_stamina()
 			else:
-				cls.fighter.stamina -= 1
+				cls.stamina -= 1
 
 	def monster_attack(cls, target):
 		# basic monster attack
@@ -475,6 +475,9 @@ class Item:
 						estus_flask.item.count -= 1
 			else:
 				if cls.use_function(cls) != 'cancelled':
+					print cls.owner.name
+					print inventory[0].name
+					print inventory[1].name
 					inventory.remove(cls.owner) # use item if it wasn't cancelled
 					if cls.owner in hotkeys:
 						hotkeys.remove(cls.owner) # Remove form hotkey if used
@@ -1197,16 +1200,16 @@ def handle_keys():
 		# bound hotkeys
 		elif key.vk == libtcod.KEY_1:
 			if len(hotkeys) >= 1:
-				hotkeys[0].item.use()
+				hotkeys[key.vk-libtcod.KEY_1].item.use()
 		elif key.vk == libtcod.KEY_2:
 			if len(hotkeys) >= 2:
-				hotkeys[1].item.use()
+				hotkeys[key.vk-libtcod.KEY_1].item.use()
 		elif key.vk == libtcod.KEY_3:
 			if len(hotkeys) >= 3:
-				hotkeys[2].item.use()
+				hotkeys[key.vk-libtcod.KEY_1].item.use()
 		elif key.vk == libtcod.KEY_4:
 			if len(hotkeys) >= 4:
-				hotkeys[3].item.use()
+				hotkeys[key.vk-libtcod.KEY_1].item.use()
 		elif chr(key.c) == 'p':
 			# regenerate 1 stamina while waiting
 			if player.fighter.stamina != player.fighter.max_stamina:
@@ -1964,6 +1967,7 @@ def load_game():
 	global map, objects, inventory, player, game_msgs, game_state, bonfire
 	global stairs, dungeon_level, estus_flask, estus_flask_max, hotkeys
 
+	temp_hotkeys = [] # Store indices of objects in hotkeys
 	file = shelve.open('savegame.sav', 'r')
 	map = file['map']
 	objects = file['objects']
@@ -1975,7 +1979,9 @@ def load_game():
 	stairs = objects[file['stairs_index']]
 	estus_flask = inventory[file['estus_index']]
 	estus_flask_max = file['estus_max']
-	hotkeys = file['hotkeys']
+	for index in file['hotkey_indices']:
+		temp_hotkeys.append(inventory[index])
+	hotkeys = temp_hotkeys
 	bonfire = objects[file['bonfire_index']]
 	file.close()
 	
@@ -1986,6 +1992,7 @@ def save_game():
 	# shelves make use of Python's dictionary. 
 	# Basically a key valeu pair from PHP
 	# open an empty shelf (possible overwriting an old one) to write game data
+	temp_hotkeys = [] # Store indices of objects in hotkeyss
 	file = shelve.open('savegame.sav', 'n')
 	file['map'] = map
 	file['objects'] = objects
@@ -1997,7 +2004,9 @@ def save_game():
 	file['stairs_index'] = objects.index(stairs)
 	file['estus_index'] = inventory.index(estus_flask)
 	file['estus_max'] = estus_flask_max
-	file['hotkeys'] = hotkeys
+	for obj in hotkeys:
+		temp_hotkeys.append(inventory.index(obj))
+	file['hotkey_indices'] = temp_hotkeys
 	file['bonfire_index'] = objects.index(bonfire)
 	file.close()
 
