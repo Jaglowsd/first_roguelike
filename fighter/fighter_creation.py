@@ -15,9 +15,11 @@ def from_dungeon_level(table):
 def monster_chance():
 	# dictionary of monsters and there chances of spawn
 	monster_chances = {}
-	monster_chances['undead_rat'] = from_dungeon_level([[60, 1, 2],
+	monster_chances['undead_rat'] = from_dungeon_level([[60, 1, 1],
+													 [40, 2, 2],
 													 [25, 3, 4]])
-	monster_chances['hollow'] = from_dungeon_level([[40, 1, 2],
+	monster_chances['hollow'] = from_dungeon_level([[40, 1, 1],
+													 [60, 2, 2],
 													 [45, 3, 4],
 													 [35, 5, 6]])
 	monster_chances['undead_soldier'] = from_dungeon_level([[30, 3, 4],
