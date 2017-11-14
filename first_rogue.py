@@ -482,13 +482,13 @@ class Item:
 	def pick_up(cls):
 		# add item to player's inventory and remove it from the map.
 		if len(inventory) >= 26:
-			message('Your inventory is full! Cannot pick up '
+			message('Inventory is full. Cannot pick up '
 					+ cls.owner.name
 					+ '.', libtcod.red)
 		else:
 			inventory.append(cls.owner)
 			objects.remove(cls.owner)
-			message('Picked up ' + cls.owner.name + '!', libtcod.green)
+			message('Picked up ' + cls.owner.name + '.', libtcod.green)
 
 			# special case where the item is a piece of equipment,
 			# the 'use' function toggles equip/dequip
@@ -614,7 +614,7 @@ def make_map():
 			for x in range(constants.MAP_WIDTH)]
 
 	# Prefab map for first boss
-	if dungeon_level == 6:
+	if dungeon_level == 7:
 		map_b = prefab.boss_AD
 		for y in range(constants.PREFAB_HEIGHT):
 			for x in range(constants.PREFAB_WIDTH):
@@ -1034,7 +1034,6 @@ def loot_drop(monster):
 	if type:
 		monster_def = getattr(fighter_definitions, type)
 		loot_chances = monster_def['loot']
-		print loot_chances
 		choice = random_choice(loot_chances)
 
 	item_object = None
@@ -2127,7 +2126,7 @@ libtcod.console_set_custom_font('fonts/consolas12x12_gs_tc.png',
 								libtcod.FONT_TYPE_GREYSCALE 
 								| libtcod.FONT_LAYOUT_TCOD)
 libtcod.console_init_root(constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT, 
-						  'python/libtcod tutorial', False)
+						  'Rogue Souls', False)
 libtcod.sys_set_fps(constants.LIMIT_FPS)
 
 # Set height and width of panels
