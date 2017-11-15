@@ -1401,7 +1401,7 @@ def render_gui():
 	libtcod.console_print_frame(msg_panel, 0, 0, constants.MSG_PANEL_WIDTH,
                                 constants.MSG_PANEL_HEIGHT, False,
 								libtcod.BKGND_NONE, None)
-	
+
 	# print game feed, one message at a time.	
 	y = 1
 	for (line, color) in game_msgs:
@@ -1439,8 +1439,9 @@ def render_gui():
 							'Souls ' + str(player.fighter.souls))
 
 	# display names of objects under the mouse.
-	# libtcod.console_print_ex(stats_panel, 1, 1, libtcod.BKGND_NONE,
-							 # libtcod.LEFT, get_names_under_mouse())
+	libtcod.console_print_ex(stats_panel, 1, constants.STATS_PANEL_HEIGHT - 2,
+							 libtcod.BKGND_NONE, libtcod.LEFT,
+							 get_names_under_mouse())
 
 	# blit contents of 'stats panel' to root console
 	libtcod.console_blit(stats_panel, 0, 0, constants.STATS_PANEL_WIDTH,
