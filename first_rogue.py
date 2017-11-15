@@ -1472,6 +1472,7 @@ def render_gui():
 		libtcod.console_hline(hotkey_panel, 1, i*2+1, constants.HOTKEY_PANEL_WIDTH - 5)
 		i += 1
 
+	# area name
 	libtcod.console_print_ex(hotkey_panel, constants.HOTKEY_PANEL_WIDTH/2,
 							 constants.HOTKEY_PANEL_HEIGHT - 4,
 							 libtcod.BKGND_NONE, libtcod.CENTER,
