@@ -29,7 +29,7 @@ undead_rat = 	{
 					'object': ['Undead Rat', 'r', libtcod.dark_sepia, True],
 					'loot': {'nothing': 95, 'soul_of_a_lost_undead': 5}}
 undead_soldier= {
-					'fighter_comp': [50, 1, 232, None, 'undead_soldier', None,
+					'fighter_comp': [50, 1, 332, None, 'undead_soldier', None,
 					4, 0, 0, 0,
 					8, 0, 0, 0,
 					1, 1, 1],
@@ -38,7 +38,7 @@ undead_soldier= {
 black_knight_sword={
 					'fighter_comp': [50, 1, 450, None, 'black_knight_sword', None,
 					7, 3, 1, 1,
-					4, 4, 0, 0,
+					8, 4, 0, 0,
 					1, 1, 1],
 					'object': ['Black Knight', 'B', libtcod.black, True],
 					'loot': {'nothing': 95, 'black_knight_greatsword': 5}}
