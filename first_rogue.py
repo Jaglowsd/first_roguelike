@@ -382,14 +382,14 @@ class Fighter:
 		cls.hp = cls.max_hp
 		cls.base_max_stamina += 10
 		cls.stamina = cls.max_stamina
-		cls.base_phys.defs += 5
-		cls.base_fire.defs = cls.base_fire.defs + 5 + cls.update_defenses('base_str')
-		cls.base_lightning.defs = cls.base_lightning.defs + 5 + cls.update_defenses('base_dex')
-		cls.base_magic.defs = cls.base_magic.defs + 5 + cls.update_defenses('base_int')
+		cls.base_phys.defs += 1
+		cls.base_fire.defs = cls.base_fire.defs + 1 + cls.update_defenses('base_str')
+		cls.base_lightning.defs = cls.base_lightning.defs + 1 + cls.update_defenses('base_dex')
+		cls.base_magic.defs = cls.base_magic.defs + 1 + cls.update_defenses('base_int')
 
 	def update_defenses(cls, base_stat):
 		# Return a bonus for elemental's def corresponding to the base stat
-		# (str-fire, lghting-dex, int-magic)
+		# (str-fire, dex-lightning, int-magic)
 		stat_value = getattr(cls, base_stat)
 		if stat_value % 2 == 0:
 			return stat_value/2
@@ -475,9 +475,6 @@ class Item:
 						estus_flask.item.count -= 1
 			else:
 				if cls.use_function(cls) != 'cancelled':
-					print cls.owner.name
-					print inventory[0].name
-					print inventory[1].name
 					inventory.remove(cls.owner) # use item if it wasn't cancelled
 					if cls.owner in hotkeys:
 						hotkeys.remove(cls.owner) # Remove form hotkey if used
@@ -1046,6 +1043,9 @@ def loot_drop(monster):
 													monster.y, consume_souls)
 			item_object.item.souls = 200
 		elif choice == 'broken_str_sword':
+			item_object = item_creation.create_equipment(choice, monster.x,
+														  monster.y)
+		elif choice == 'wooden_shield':
 			item_object = item_creation.create_equipment(choice, monster.x,
 														  monster.y)
 		elif choice == 'black_knight_greatsword':
@@ -1990,7 +1990,8 @@ def load_game():
 	hotkeys = temp_hotkeys
 	bonfire = objects[file['bonfire_index']]
 	file.close()
-	
+
+	initialize_helper_modules()
 	initialize_fov()
 	
 def save_game():
