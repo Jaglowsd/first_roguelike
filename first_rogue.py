@@ -614,7 +614,7 @@ def make_map():
 			for x in range(constants.MAP_WIDTH)]
 
 	# Prefab map for first boss
-	if dungeon_level == 7:
+	if dungeon_level == 1:
 		map_b = prefab.boss_AD
 		for y in range(constants.PREFAB_HEIGHT):
 			for x in range(constants.PREFAB_WIDTH):
@@ -1857,11 +1857,11 @@ def main_menu():
 	# Current game state is main menu
 	game_state = 'main menu'
 
-	img = libtcod.image_load('menu_background.png')
+	# img = libtcod.image_load('menu_background.png')
 
 	while not libtcod.console_is_window_closed():
 		# show the background image, at twice the regular console resolution
-		libtcod.image_blit_2x(img, 0, 0, 0)
+		# libtcod.image_blit_2x(img, 0, 0, 0)
 
 		# title of game and author
 		libtcod.console_set_default_foreground(0, libtcod.light_yellow)
@@ -1869,10 +1869,10 @@ def main_menu():
 								 constants.SCREEN_HEIGHT/2-8,
 								 libtcod.BKGND_NONE, libtcod.CENTER,
 								 'Rogue Souls')
-		libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
-								 constants.SCREEN_HEIGHT-2,
-								 libtcod.BKGND_NONE, libtcod.CENTER,
-								 'By David')
+		# libtcod.console_print_ex(0, constants.SCREEN_WIDTH/2,
+								 # constants.SCREEN_HEIGHT-2,
+								 # libtcod.BKGND_NONE, libtcod.CENTER,
+								 # 'By David')
 
 		# show options and wait for the player's choice
 		choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
