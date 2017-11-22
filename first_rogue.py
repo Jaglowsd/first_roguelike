@@ -22,7 +22,7 @@ class Object:
 
 	def __init__(self, x, y, name, char, color, blocks=False,
 				 always_visible=None, fighter=None, ai=None, item=None,
-				 equipment=None):
+				 equipment=None, speed=constants.DEFAULT_SPEED):
 	# Create object.
 		self.x = x
 		self.y = y
@@ -31,6 +31,8 @@ class Object:
 		self.color = color
 		self.blocks = blocks
 		self.always_visible = always_visible
+		self.speed = speed
+		self.wait = 0 # How many frames are waited until object can move again
 
 		# add fighter component
 		self.fighter = fighter
@@ -61,6 +63,7 @@ class Object:
 			# regenerate 1 stamina point per step.
 			if cls.fighter.stamina != cls.fighter.max_stamina:
 				cls.fighter.stamina += 1
+		cls.wait = cls.speed
 
 	def move_towards(cls, target_x, target_y):
 		# vector from this object to tagret object.
@@ -166,7 +169,8 @@ class Fighter:
 	# combat related properties and methods (player, monsters, NPCs...)
 	def __init__(self, hp, stamina, souls, death_function, type, modifier,
 				 phys_def, fire_def, lightning_def, magic_def,
-				 phys_atk, fire_atk, lightning_atk, magic_atk, str, dex, int):
+				 phys_atk, fire_atk, lightning_atk, magic_atk, str, dex, int,
+				 attack_speed=constants.DEFAULT_ATTACK_SPEED):
 		self.base_max_hp = hp # keep track of hp vs. max hp
 		self.hp = hp
 		self.base_str = str # Strength
@@ -182,6 +186,7 @@ class Fighter:
 		self.death_function = death_function		
 		self.type = type # What kind of fighter this object is
 		self.flicker = None # Flicker state of fighter
+		self.attack_speed = attack_speed
 		if modifier is not None: # Apply any name base stat modifiers
 			self.apply_modifier(modifier)
 
@@ -313,6 +318,7 @@ class Fighter:
 				equip.use_stamina()
 			else:
 				cls.stamina -= 1
+			cls.owner.wait = cls.attack_speed
 
 	def monster_attack(cls, target):
 		# basic monster attack
@@ -1176,7 +1182,7 @@ def get_equiped_in_slot(slot):
 def handle_keys():
 	# Handle key presses inputted by player.
 	global key, stairs
-	#key = libtcod.console_check_for_keypress()  #real-time
+	key = libtcod.console_check_for_keypress()  #real-time
 	#key = libtcod.console_wait_for_keypress(True) # turn-based
 
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -1188,6 +1194,9 @@ def handle_keys():
 
 
 	if game_state == 'playing':
+		if player.wait > 0: # don't take turn if still waiting
+			player.wait -= 1
+			return
 		# movement keys
 		if key.vk == libtcod.KEY_UP:
 			player_move_or_attack(0, -1)
@@ -1920,6 +1929,7 @@ def new_game():
 
 	# initialize player object
 	player = fighter_creation.create_fighter('player', 0, 0, player_death)
+	player.speed = constants.PLAYER_SPEED
 	player.level = 1
 
 	# initialize our map
@@ -2132,10 +2142,13 @@ def play_game():
 			break
 
 		# Allow monster to take turn.
-		if game_state == 'playing' and player_action != 'didn\'t-take-turn':
+		if game_state == 'playing':
 			for object in objects:
 				if object.ai:
-					object.ai.take_turn()
+					if object.wait > 0:
+						object.wait -= 1
+					else:
+						object.ai.take_turn()
 
 # set up console
 libtcod.console_set_custom_font('fonts/consolas12x12_gs_tc.png',
