@@ -95,6 +95,11 @@ SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 # 30 frames per second
 LIMIT_FPS = 30
 
+# Speed values to simulate real-time combat
+DEFAULT_SPEED = 8
+PLAYER_SPEED = 2
+DEFAULT_ATTACK_SPEED = 20
+
 # Color definitions
 color_dark_wall = libtcod.darkest_sepia
 color_dark_ground = libtcod.darkest_grey
